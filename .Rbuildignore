@@ -1,0 +1,7 @@
+^.*\.Rproj$
+^\.Rproj\.user$
+^adhoc$
+^data$
+^figure$
+^table$
+^LICENSE\.md$
