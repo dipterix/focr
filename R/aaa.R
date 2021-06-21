@@ -1,5 +1,10 @@
+#' @docType package
+NULL
+
 #' @import stats
 #' @import graphics
+#' @importFrom utils read.table
+NULL
 
 deparse_svec <- function(nums, connect = ':', concatenate = FALSE, collapse = ',', max_lag = 1){
   nums <- nums[is.finite(nums)]
@@ -25,3 +30,12 @@ deparse_svec <- function(nums, connect = ':', concatenate = FALSE, collapse = ',
   }
   re
 }
+
+
+debug_verbose <- function(..., appendLF = TRUE, verbose = TRUE){
+  if(verbose){
+    message(..., appendLF = appendLF)
+  }
+}
+
+

@@ -1,3 +1,19 @@
+#' @title Add indices as ling segments or points to the figures
+#' @description Draws isolated points as dots, and consecutive points as line
+#' segments.
+#' @param x integer indices, will be used to calculate locations in
+#' \code{\link[graphics]{points}} or \code{\link[graphics]{arrows}}
+#' @param y y-axis locations for points or line segments
+#' @param code,length,... passed to \code{\link[graphics]{arrows}}
+#' @param pch point styles, passed to \code{\link[graphics]{points}}
+#' @param clear whether to clear the line before drawing
+#' @param lwd used to calculate the line weight and point size; see \code{'lwd'}
+#' and \code{'cex'} in \code{\link[graphics]{plot}}, Section 'Details'.
+#' @return Nothing.
+#' @examples
+#' plot(1:10)
+#' abseg(c(1,2,3,5,7,8,10), y = 5, lwd = 4, col = 'red')
+#' @export
 abseg <- function(x, y, code = 0, pch = '.', length = 0.05, clear = FALSE, lwd = 1, ...){
   if(!length(x)){ return(invisible()) }
   x <- deparse_svec(unlist(x), concatenate = FALSE, connect = ",")
@@ -8,7 +24,7 @@ abseg <- function(x, y, code = 0, pch = '.', length = 0.05, clear = FALSE, lwd =
     if(s == ""){ break }
     s <- eval(parse(text = sprintf("c(%s)", s)))
     if(length(s) == 1){
-      points(s, y, pch = pch, ..., lwd = lwd)
+      points(s, y, pch = pch, ..., cex = lwd)
     } else {
       arrows(x0 = s[1], y0 = y, x1 = s[2], y1 = y, code = code, length = length, lwd = lwd, ...)
     }

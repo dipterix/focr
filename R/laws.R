@@ -1,4 +1,4 @@
-#' @export
+
 laws_sabha_gauss <- function(
   data, bandwidth, alpha = 0.05, method = c('laws', "sabha"),
   initial_filter = 0.9, side = c("two", "right", "left"),
@@ -32,7 +32,6 @@ laws_sabha_gauss <- function(
   res
 }
 
-#' @export
 laws_pval <- function(pv, bandwidth, dimension = c("one", "two", "three"), alpha = 0.05, initial_filter = 0.9){
   dimension <- match.arg(dimension)
   bh.th<-BH(pv, initial_filter)$tau
@@ -55,12 +54,12 @@ laws_pval <- function(pv, bandwidth, dimension = c("one", "two", "three"), alpha
     bandwidth = bandwidth,
     dimension = dimension,
     initial_filter = initial_filter,
-    method = "LAWS"
+    method = "LAWS",
+    details = res
   )
 }
 
 
-#' @export
 sabha_pval <- function(pv, bandwidth, dimension = c("one", "two", "three"), alpha = 0.05, initial_filter = 0.9){
   dimension <- match.arg(dimension)
   bh.th<-BH(pv, initial_filter)$tau
@@ -80,6 +79,8 @@ sabha_pval <- function(pv, bandwidth, dimension = c("one", "two", "three"), alph
     bandwidth = bandwidth,
     dimension = dimension,
     initial_filter = initial_filter,
-    method = "SABHA"
+    method = "SABHA",
+    details = res
   )
 }
+

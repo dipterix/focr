@@ -5,3 +5,6 @@
 ^figure$
 ^table$
 ^LICENSE\.md$
+^inst/triangle\.png$
+^doc$
+^Meta$

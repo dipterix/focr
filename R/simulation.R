@@ -81,6 +81,71 @@ gen_error <- function(n_points, type = c("AR", "exponential", "matern", "any", "
 
 }
 
+#' @name simulation
+#' @title Generate simulation data used in the paper and vignettes
+#' @description \code{simulation_data} generates one-dimensional data,
+#' \code{simulation_data_2d} generates two-dimensional image data.
+#' @param n_points number of hypotheses, less equal than 1000
+#' @param n_obs number of observations to generate
+#' @param mu_type underlying function type, choices are 'sine', 'step', and
+#' 'custom'
+#' @param cov_type covariance type, choices are \code{'AR'},
+#' \code{'exponential'}, \code{'matern'},
+#' \code{'any'} (arbitrary dependence), and \code{'iid'} (independent)
+#' @param custom function to generate mean function if \code{mu_type="custom"}
+#' @param corrupt whether to use corruption model to generate data instead of
+#' addition model
+#' @param ... passed to internal function; see 'Details'
+#' @details
+#' When \code{mu_type} is 'custom', parameter \code{custom} needs to be a
+#' function that takes \code{1:n_points} as input and spit out the underlying
+#' mean function.
+#'
+#' When \code{cov_type} is \code{'AR'}, the auto-correlation of adjacent column
+#' will be 0.9; The \code{cov_type="exponential"} and \code{cov_type="matern"}
+#' share the same \code{phi=0.01} (range parameter) but different \code{kappa}
+#' (smoothness parameter). If you wish to change the range or smoothness
+#' parameter, pass \code{phi} and \code{kappa} to \code{...} (see 'Examples').
+#' For \code{'any'} \code{cov_type}, the underlying covariance will be
+#' generated from a real data with arbitrary dependence. For \code{'iid'}
+#' \code{cov_type}, the errors are independent standard normal distributed.
+#'
+#' By default, \code{corrupt} is false, then the generated data is an addition
+#' of underlying signal plus random noises. When \code{corrupt} is true, the
+#' underlying signal will be randomly corrupted for each observation. The amount
+#' of corrupted points follows a binomial distribution.
+#'
+#' @examples
+#'
+#'
+#' # -------------------- Basic usage ------------------------
+#' generator <- simulation_data(200, cov_type = 'matern')
+#'
+#' # generate date with signal-to-noise ratio = 0.4
+#' data <- generator$gen_data(snr = 0.4)
+#'
+#' # Data is n_obs x n_points matrix
+#' dim(data)
+#'
+#' image(cor(data), main = 'Matern correlation')
+#'
+#' # -------------------- Change Matern parameters ------------------------
+#' # Control kappa/phi here
+#' generator <- simulation_data(200, cov_type = 'matern', kappa = 10)
+#' data <- generator$gen_data(snr = 0.4)
+#'
+#' image(cor(data), main = 'Smooth Matern correlation with kappa=10')
+#'
+#' # -------------------- 2D data ------------------------
+#' # generate a 2D triangle data
+#' generator <- simulation_data_2d(cov_type = 'AR')
+#' data <- generator$gen_data(snr = 0.6)
+#'
+#' par(mfrow = c(1,2))
+#' image(matrix(colMeans(data), 32), main = '2D sample mean')
+#' image(matrix(generator$mu, 32), main = '2D underlying mean')
+#'
+#'
 #' @export
 simulation_data <- function(n_points, n_obs = 100, mu_type = c("sine", "step", "custom"),
                             cov_type = c("AR", "exponential", "matern", "any", "iid"),
@@ -147,6 +212,57 @@ simulation_data <- function(n_points, n_obs = 100, mu_type = c("sine", "step", "
     .class = "focr_simulation_data"
   )
 }
+
+#' @rdname simulation
+#' @export
+simulation_data_2d <- function(
+  cov_type = c("iid", "AR", "exponential", "matern", "any"),
+  n_obs = 100, corrupt = FALSE, ...
+){
+  cov_type <- match.arg(cov_type)
+  # download.file(url, 'figure/tmp.png')
+  # mu <- png::readPNG('inst/triangle.png')
+  # write.table(1-mu[,,3], file = 'inst/triangle.txt', sep = '\t',
+  #             row.names = FALSE, col.names = FALSE)
+  mu <- read.table(system.file('triangle.txt', package = 'focr'), sep = '\t', header = FALSE)
+  mu <- as.matrix(mu)
+  dim <- dim(mu)
+  n_points <- prod(dim)
+  dat <- gen_error(n_points, type = cov_type, ...)
+  # generate data using cov of power
+
+  sig <- which(mu != 0)
+
+  gen_data <- function(snr = 1){
+    if(corrupt){
+      if(snr <= 0 || snr > 1){
+        stop("$gen_data(corrupt=TRUE) only accept snr within (0,1]")
+      }
+      d <- dat$gen_data(n_obs = n_obs, 0)
+      mu <- matrix(mu, nrow = n_obs, ncol = n_points, byrow = TRUE)
+      idx <- sample(n_obs * n_points, ceiling(n_obs * n_points * (1-snr)))
+      mu[idx] <- 0
+      # d[-idx] <- 0
+      d <- mu + d
+    } else {
+      d <- dat$gen_data(n_obs = n_obs, 0) #* (1-snr)
+      mu <- matrix(mu * snr, nrow = n_obs, ncol = n_points, byrow = TRUE)
+      d <- mu + d
+    }
+    d
+  }
+
+  pretty_list(
+    simulation_type = dat$type,
+    mu = mu * dat$sd, support = sig,
+    n_obs = n_obs, n_points = dat$n_points,
+    sd = dat$sd, cor = dat$cor,
+    gen_data = gen_data,
+    .class = "focr_simulation_data_2d"
+  )
+}
+
+
 
 plot_clean <- function (xlim = c(0,1), ylim = c(0,1), x = 1, y = 1, type = "n",
                         xlab = "", ylab = "", ...) {

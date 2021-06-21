@@ -1,27 +1,33 @@
-BY <- function(pvals, alpha = 0.05) {
-  BH(pvals, alpha = alpha / log(length(pvals)))
+
+by_pvals <- function(pvals, alpha = 0.05, filter = 1) {
+  BH(pvals, alpha = alpha / log(length(pvals)), filter = filter)
 }
 
-BH <- function (pvals, alpha = 0.05) {
+
+bh_pvals <- function (pvals, alpha = 0.05, filter = 1) {
   m <- length(pvals)
   pvals[is.na(pvals)] <- 1
+
+  # p-value == 1 will be removed for sure
+  # actual m is p-vals != 1
+  alpha1 <- min(alpha * m / sum(pvals < filter), 1)
 
   o <- order(pvals, decreasing = TRUE)
   ro <- order(o)
   i <- m:1L
   qvals <- pmin(1, cummin(m / i * pvals[o]))[ro]
 
-  sel <- qvals <= alpha
+  sel <- qvals <= alpha1
   nrejs <- sum(sel)
   if(!length(nrejs) || !nrejs){
     rejs <- integer(0L)
   } else {
     rejs <- which(sel)
   }
-  tau <- alpha * nrejs / m
+  tau <- alpha1 * nrejs / m
   return(list(
     nrejs = nrejs, rejs = rejs, order = (m + 1L)-ro,
-    qvals = qvals, tau = tau
+    qvals = qvals, tau = tau, filter = filter
   ))
 }
 

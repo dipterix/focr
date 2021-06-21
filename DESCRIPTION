@@ -1,17 +1,32 @@
 Package: focr
 Type: Package
-Title: False Overlapped-Cluster Rate Control
+Title: A False Overlapped-Cluster Rate Control ('FOCR') Framework
 Version: 0.1.0
 Authors@R: c(
     person("Zhengjia", "Wang", email = "dipterix.wang@gmail.com", role = c("aut", "cre")),
     person("Meng", "Li", email = "meng@rice.edu", role = c("aut", "ths"))
     )
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
+Description: Provides a two-stage framework for multiple testing problems with 
+    topological constraints. In the first stage, clusters of hypotheses are 
+    selected as regions of interests. The clusters can be overlapped. The false
+    overlapped-cluster rate w.r.t. the clusters is controlled. In the second
+    stage, conditional p-values are calculated at the individual level in a 
+    post-selection inference fashion. The FDR controlling procedures are applied
+    to these conditional p-values. 
+    Two functions are proposed: 'focr_initial' and 'focr'. The function 'focr' 
+    provides a bundled stage-I and stage-II procedure with preset settings. 
+    The function 'focr_initial' only controls the stage-I 'FOCR' and calculate
+    the conditional p-values. However, it allows more flexible controls on the 
+    clusters.
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.1.1
 Imports: 
-    graphics (>= 4.1.0),
-    stats (>= 4.1.0)
+    utils,
+    graphics,
+    stats
+Suggests: 
+    rmarkdown,
+    knitr
+VignetteBuilder: knitr

@@ -1,0 +1,272 @@
+---
+title: "False Overlapped-Cluster Rate"
+output: rmarkdown::html_vignette
+author: Zhengjia Wang
+vignette: >
+  %\VignetteIndexEntry{False Overlapped-Cluster Rate}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+A false overlapped-cluster rate (FOCR) is a type-I error measure for multiple testing problems with topological constraints. This package `focr` provides a two-stage multiple testing control procedure:
+
+* In the first stage, clusters of hypotheses are rejected as regions of interests (`ROI`), with **FOCR** controlled at desired level;
+* In the second stage, conditional p-values are calculated in a post-selection inference fashion. **FDR** control procedures are applied to these p-values to further select individual hypotheses.
+
+## A functional example
+
+We generate a functional data as follows. In the figure, the red solid line is the underlying step function. The blue line is the data sample mean, and ribbon around is the `95%` point-wise confidence interval.
+
+```{r setup, fig.width=6}
+library(focr)
+set.seed(400)
+generator <- simulation_data(n_points = 1000, mu_type = 'step')
+data <- generator$gen_data(snr = 0.5)
+plot(generator, data = data, snr = 0.5)
+```
+
+We apply the `FOCR-BH` approach to control the FDR at level 0.05. `FOCR-BH` uses the `Benjamini-Hochberg` (`BH`) procedure as the FDR control method in stage-II.
+
+
+```{r FOCR-BH, fig.width=6}
+res <- focr(data = data, block_size = 21, 
+            alpha = 0.05, fdr_method = 'BH')
+```
+
+Let's plot $s$ where the null hypotheses $\mu(s) = 0$ are rejected. The orange line segments indicate the initial rejections that control the `FOCR` (cluster-level `ROI`). The blue line segments are the `FOCR-BH` final rejections that control the `FDR` (individual level).
+
+```{r, fig.width=6}
+plot(generator$mu, type = 'l', col = 'red', ylim = c(-1,1))
+abseg(res$rej_hypotheses, y = -0.3, col = 'orange3', lwd = 2)
+abseg(res$post_selection$rejs, y = -0.5, col = 'blue', lwd = 2)
+```
+
+To calculate the false discovery proportion and statistical power of this run,
+
+```{r}
+# power & FDP
+fdp(res$post_selection$rejs, generator$support)
+pwr(res$post_selection$rejs, generator$support)
+```
+
+## 2D, 3D spatial data
+
+Let's generate a 2D sample data ($30\times 30$). The red colored pixels are non-zeros, and white pixels are true null pixels.
+
+```{r 2D-setup}
+library(focr)
+set.seed(400)
+generator <- simulation_data_2d(cov_type = 'iid')
+data <- generator$gen_data(snr = 0.4)
+mu <- generator$mu
+pal <- colorRampPalette(c('white', 'red'))(64)
+pal2 <- colorRampPalette(c('red', 'white', 'white'))(64)
+image(mu, zlim = c(0,1), col = pal)
+```
+
+Next, we perform the `FOCR-BH` procedure in one line.
+
+```{r}
+# Run FOCR-BH
+dim(data)
+res <- focr(data = data, block_size = 3, 
+            alpha = 0.05, fdr_method = 'BH', 
+            dimension = dim(mu))
+```
+
+Notice `data` is flattened as a matrix of dimension `100 \times 1024` (100 observations and 32x32 columns)
+
+The following figure shows the underlying image, `FOCR` conditional p-values and `FOCR-BH` final rejections side-by-side. As a comparison, we also show the results of the classical `BH` procedure on unconditional p-values. The `FOCR-BH` approach tends to select less isolated pixels outside of the cluster. It is also more powerful than the `BH` procedure.
+
+```{r FOCR-BH-2D, fig.width=6, fig.height=6}
+par(mfrow = c(2, 2))
+image(mu, zlim = c(0,1), col = pal, main = 'Underlying mean')
+
+# Plot conditional p-values
+cond_pvals <- res$cond_pvals
+dim(cond_pvals) <- dim(mu)
+image(cond_pvals, zlim = c(0,1), col = pal2, 
+      main = 'FOCR conditional p-values')
+
+# Plot final rejections
+img <- matrix(NA, 32, 32)
+focr_bh <- res$post_selection$rejs
+img[focr_bh] <- 1
+image(img, zlim = c(0,1), col = pal, 
+      main = 'FOCR-BH final rejection (proposed)', 
+      sub = sprintf("FDP: %.1f%%, Power: %.1f%%",
+                    fdp(focr_bh, generator$support)*100,
+                    pwr(focr_bh, generator$support)*100))
+
+# Compare with BH
+pvals <- res$uncond_pvals
+dim(pvals) <- dim(mu)
+rej <- focr:::BH(pvals, alpha = 0.05)
+bh <- rej$rejs
+img <- matrix(NA, 32, 32)
+img[bh] <- 1
+image(img, zlim = c(0,1), col = pal, 
+      main = 'BH rejection as comparison',
+      sub = sprintf("FDP: %.1f%%, Power: %.1f%%",
+                    fdp(bh, generator$support)*100,
+                    pwr(bh, generator$support)*100))
+```
+
+```{r, results='hide', message=FALSE, echo=FALSE}
+# bib <- RefManageR::ReadBib(system.file('REFERENCES.bib', package = 'focr'))
+# RefManageR::BibOptions(check.entries = FALSE, style = "markdown", bib.style = "alphabetic", cite.style = 'authoryear', hyperlink = "to.doc", super = TRUE)
+
+# * `BH` `r RefManageR::Citep(bib, 'benjamini1995controlling')`: controls the FDR under independence or `PRDS`
+# * `BY` `r RefManageR::Citep(bib, 'benjamini2001control')`: controls the FDR under arbitrary dependence
+# * `SABHA` `r RefManageR::Citep(bib, 'li2019multiple')`: controls the FDR under independence (or asymptotically under weak dependence)
+# * `LAWS` `r RefManageR::Citep(bib, 'cai2021laws')`: controls the FDR under independence (or asymptotically under weak dependence)
+```
+
+## Choices of post-selection FDR control procedures
+
+The built-in post-selection FDR procedures are:
+
+* `BH` <a name=cite-benjamini1995controlling></a>([Benjamini and Hochberg, 1995](#bib-benjamini1995controlling)): controls the FDR under independence or `PRDS`
+* `BY` <a name=cite-benjamini2001control></a>([Benjamini and Yekutieli, 2001](#bib-benjamini2001control)): controls the FDR under arbitrary dependence
+* `SABHA` <a name=cite-li2019multiple></a>([Li and Barber, 2019](#bib-li2019multiple)): controls the FDR under independence (or asymptotically under weak dependence)
+* `LAWS` <a name=cite-cai2021laws></a>([Cai, Sun, and Xia, 2021](#bib-cai2021laws)): controls the FDR under independence (or asymptotically under weak dependence)
+
+The post-selection FDR method can be specified via `fdr_method` parameter. For example, 
+
+```{r, eval=FALSE}
+# Change `fdr_method` to BH, BY, SABHA, or LAWS
+res <- focr(data = data, block_size = 3, 
+            alpha = 0.05, fdr_method = 'BY')
+```
+
+Alternatively, `fdr_method` can be a custom function as follows:
+
+```{r, eval = FALSE}
+#' @param pvals conditional p-values
+#' @param alpha FDR level to control
+#' @param ... other parameters needed
+my_method <- function(pvals, alpha, ...){
+  (your code here)
+}
+res <- focr(data = data, block_size = 3, 
+            alpha = 0.05, fdr_method = my_method)
+```
+
+The returned values by `my_method` will be accessible as `res$post_selection`.
+
+
+## Advanced usage
+
+The function `focr()` runs the post-selection FDR control procedure right after the stage-I. Although convenient, it might not be optimal in some scenarios. Under the following scenarios, it is highly recommended to use the `focr_initial` function:
+
+* cluster block is not sliding window and need to be specified manually
+* data correlation is given
+
+The definition of `focr_initial` function is:
+
+```{r, eval=FALSE}
+focr_initial <- function(
+  data, data_corr, blocks, nblocks = ncol(data), mu = 0, alpha = 0.05, 
+  verbose = FALSE, side = c('two', 'left', 'right'), ...)
+```
+
+The `data_corr` allows prespecified correlation matrix. `blocks` can be a list of column indices or a function that returns column indices. When `blocks` is a list, `nblocks` is ignored. When `blocks` is a function, `nblocks` defines the total number of blocks.
+
+```{r}
+library(focr)
+set.seed(10)
+generator <- simulation_data(n_points = 1000, mu_type = 'step', cov_type = 'iid')
+data <- generator$gen_data(snr = 0.5)
+dim(data)
+
+# Run stage-I with customized blocks
+res <- focr_initial(data, blocks = function(col){
+  if(col %in% 1:100){ return(1:100) }
+  if(col %in% 101:400){ return(101:600) }
+  if(col %in% 401:800){ return(401:800) }
+  if(col %in% 801:1000){ return(601:1000) }
+})
+```
+
+There are 4 blocks in this case: 
+
+* Block 1: column 1-100
+* Block 2: column 101-600 (kernel 101-400, overlapped with block 3)
+* Block 3: column 401-800 (kernel 401-800, overlapped with block 2 and 4)
+* Block 4: column 601-1000 (kernel 801-1000, overlapped with block 3)
+
+```{r, fig.width=7}
+par(mfrow=c(1,2))
+
+plot(generator$mu, col = 'red', type = 'n', ylab = '', 
+     ylim = c(-1,0), yaxt = 'n')
+text(x = 50, y = -0.3, "Block 1", col = 'blue')
+abseg(1:100, y = -0.4, col = 'blue')
+text(x = 350, y = -0.5, "Block 2", col = 'green')
+abseg(101:600, y = -0.6, col = 'green')
+text(x = 600, y = -0.6, "Block 3", col = 'orange')
+abseg(401:800, y = -0.8, col = 'orange')
+text(x = 800, y = -0.9, "Block 4", col = 'purple')
+abseg(601:1000, y = -1, col = 'purple')
+
+
+plot(res$cond_pvals, type='l', ylab = '', 
+     main = bquote('Conditional p-value & '~mu(s)))
+lines(generator$mu, col = 'red')
+```
+
+The conditional p-values are calculated and stored at `res$cond_pvals`. It can be used for further inference (such as FDR control). For example:
+
+```{r, fig.width=6}
+rej <- LAWS(res$cond_pvals, bandwidth = 20, dimension = 'one')
+plot(generator$mu, col = 'red', ylab = '', 
+     ylim = c(-0.2,1), yaxt = 'n', type = 'l',
+     main = "Undelying mean (red) and rejected hypotheses (blue)")
+abseg(rej$rejs, y = -0.2, col = 'blue')
+text(x = 750, y = -0.1, cex = 0.8, sprintf(
+  "FDP: %.1f%%; Power: %.1f%%",
+  fdp(rej$rejs, generator$support) * 100,
+  pwr(rej$rejs, generator$support) * 100
+))
+```
+
+
+```{r, results = "asis", echo = FALSE}
+# RefManageR::PrintBibliography(bib, .opts = list(check.entries = FALSE))
+```
+
+<a
+name=bib-benjamini1995controlling></a>[[1]](#cite-benjamini1995controlling)
+Y. Benjamini and Y. Hochberg. “Controlling the false discovery rate: a
+practical and powerful approach to multiple testing”. In: _Journal of the
+Royal statistical society: series B (Methodological)_ 57.1 (1995), pp.
+289-300.
+
+<a name=bib-benjamini2001control></a>[[2]](#cite-benjamini2001control) Y.
+Benjamini and D. Yekutieli. “The control of the false discovery rate in
+multiple testing under dependency”. In: _Annals of statistics_ (2001), pp.
+1165-1188.
+
+<a name=bib-cai2021laws></a>[[3]](#cite-cai2021laws) T. T. Cai, W. Sun,
+and Y. Xia. “Laws: A locally adaptive weighting and screening approach to
+spatial multiple testing”. In: _Journal of the American Statistical
+Association_ (2021), pp. 1-14.
+
+<a name=bib-li2019multiple></a>[[4]](#cite-li2019multiple) A. Li and R.
+F. Barber. “Multiple testing with the structure-adaptive Benjamini-Hochberg
+algorithm”. In: _Journal of the Royal Statistical Society: Series B
+(Statistical Methodology)_ 81.1 (2019), pp. 45-74.
+
+
+
+
+
+
+
