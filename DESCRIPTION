@@ -18,9 +18,11 @@ Description: Provides a two-stage framework for multiple testing problems with
     The function 'focr_initial' only controls the stage-I 'FOCR' and calculate
     the conditional p-values. However, it allows more flexible controls on the 
     clusters.
+URL: http://github.dipterix.org/focr
+BugReports: http://github.dipterix.org/focr/issues
 License: MIT + file LICENSE
 Encoding: UTF-8
-LazyData: true
+Language: en-US
 RoxygenNote: 7.1.1
 Imports: 
     utils,
@@ -31,4 +33,3 @@ Suggests:
     knitr,
     kedd
 VignetteBuilder: knitr
-URL: http://github.dipterix.org/focr

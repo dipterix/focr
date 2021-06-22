@@ -29,9 +29,7 @@ In functional data analysis, the underlying function $\mu(s)$ may be subject to 
 It is scientifically meaningful to extract blocks (clusters, or connected regions) of $s$ such that $H_{0}(s)$ are rejected. The FOCR framework controls the type-I error in the following two stages:
 
 * Stage-I: given blocks of hypotheses, control the FOCR (an extended false cluster rate) at given level. This step is to find connected regions of interests. The FOCR is defined as: <br /><br />
-$$\text{FOCR} = \mathbb{E}\left[
-V  / R \times I_{\{R>0\}}
-\right],$$ <br /><br />
+$\text{FOCR} = \mathbb{E}\left[V  / R \times I_{\{R>0\}}\right],$ <br /><br />
 where $V={\sum}_{k}\nu(D_{k})R(B_{k})(1-\theta(B_{k}))$ and $R=\sum_{k}\nu(D_{k})R(B_{k})$. $B_{k}$ are the overlapped clusters (blocks) and $D_{k}$ are the corresponding disjoint kernels;
 * Stage-II: given the previous rejection (clusters), calculate conditional p-values in a post-selection fashion. Then a further selection procedure will be applied to the conditional p-values to control the FDR (at individual level).
 
