@@ -31,3 +31,4 @@ Suggests:
     knitr,
     kedd
 VignetteBuilder: knitr
+URL: http://github.dipterix.org/focr
