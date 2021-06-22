@@ -70,7 +70,14 @@
   </ul>
 </li>
       </ul>
-<ul class="nav navbar-nav navbar-right"></ul>
+<ul class="nav navbar-nav navbar-right">
+<li>
+  <a href="http://github.com/dipterix/focr/">
+    <span class="fab fa-github fa-lg"></span>
+     
+  </a>
+</li>
+      </ul>
 </div>
 <!--/.nav-collapse -->
   </div>
@@ -91,7 +98,12 @@
 <p><em>H</em><sub>0</sub>(<em>s</em>) : <em>μ</em>(<em>s</em>) = 0,  <em>H</em><sub>1</sub>(<em>s</em>) : <em>μ</em>(<em>s</em>) ≠ 0</p>
 <p>In functional data analysis, the underlying function <em>μ</em>(<em>s</em>) may be subject to topological constraints (temporal, spatial, …). The functional domain is also uncountable. It is scientifically meaningful to extract blocks (clusters, or connected regions) of <em>s</em> such that <em>H</em><sub>0</sub>(<em>s</em>) are rejected. The FOCR framework controls the type-I error in the following two stages:</p>
 <ul>
-<li>Stage-I: given blocks of hypotheses, control the FOCR (an extended false cluster rate) at given level. This step is to find connected regions of interests. The FOCR is defined as: <br><br> FOCR = 𝔼<br><span class="math display">$$*V*/*R*×*I*&lt;sub&gt;{*R* &amp;gt; 0}&lt;/sub&gt;$$</span><br>, <br><br> where <em>V</em> = ∑<sub><em>k</em></sub><em>ν</em>(<em>D</em><sub><em>k</em></sub>)<em>R</em>(<em>B</em><sub><em>k</em></sub>)(1 − <em>θ</em>(<em>B</em><sub><em>k</em></sub>)) and <em>R</em> = ∑<sub><em>k</em></sub><em>ν</em>(<em>D</em><sub><em>k</em></sub>)<em>R</em>(<em>B</em><sub><em>k</em></sub>). <em>B</em><sub><em>k</em></sub> are the overlapped clusters (blocks) and <em>D</em><sub><em>k</em></sub> are the corresponding disjoint kernels;</li>
+<li>Stage-I: given blocks of hypotheses, control the FOCR (an extended false cluster rate) at given level. This step is to find connected regions of interests. The FOCR is defined as follow, where <em>B</em><sub><em>k</em></sub> are the overlapped clusters (blocks), and <em>D</em><sub><em>k</em></sub> are the corresponding disjoint kernels;</li>
+</ul>
+<blockquote>
+<p><img src="https://render.githubusercontent.com/render/math?math=%5Cfrac%7B%5Csum_%7Bk=1%7D%5E%7BK%7D%5Cnu(D_%7Bk%7D)R(B_%7Bk%7D)%5Cbig(1-%5Ctheta(B_%7Bk%7D)%5Cbig)%7D%7B%5Csum_%7Bk=1%7D%5E%7BK%7D%5Cnu(D_%7Bk%7D)R(B_%7Bk%7D)%7D%20I_%7B%5Cbig%7B%5Csum_%7Bk=1%7D%5E%7BK%7D%5Cnu(D_%7Bk%7D)R(B_%7Bk%7D)%20%3E%200%5Cbig%7D%7D" alt="FOCR Fomula here"></p>
+</blockquote>
+<ul>
 <li>Stage-II: given the previous rejection (clusters), calculate conditional p-values in a post-selection fashion. Then a further selection procedure will be applied to the conditional p-values to control the FDR (at individual level).</li>
 </ul>
 <p>Please read <a href="http://github.dipterix.org/focr/articles/false-overlapped-cluster-rate.html">vignettes</a>, and <a href="http://github.dipterix.org/focr/reference/focr.html">help documents</a> for more examples.</p>
@@ -130,7 +142,9 @@
     <div class="links">
 <h2>Links</h2>
 <ul class="list-unstyled">
-<li>Report a bug at <br><a href="http://github.dipterix.org/focr/issues">http://​github.dipterix.org/​focr/​issues</a>
+<li>Browse source code at <br><a href="http://github.com/dipterix/focr/">http://​github.com/​dipterix/​focr/​</a>
+</li>
+<li>Report a bug at <br><a href="http://github.com/dipterix/focr/issues">http://​github.com/​dipterix/​focr/​issues</a>
 </li>
 </ul>
 </div>
