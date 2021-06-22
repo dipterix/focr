@@ -8,3 +8,8 @@
 ^inst/triangle\.png$
 ^doc$
 ^Meta$
+^\.github$
+^README\.Rmd$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$
