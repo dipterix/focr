@@ -30,7 +30,7 @@ It is scientifically meaningful to extract blocks (clusters, or connected region
 
 * Stage-I: given blocks of hypotheses, control the FOCR (an extended false cluster rate) at given level. This step is to find connected regions of interests. The FOCR is defined as follow, where $B_{k}$ are the overlapped clusters (blocks), and $D_{k}$ are the corresponding disjoint kernels;
 
-> ![FOCR Fomula here](https://render.githubusercontent.com/render/math?math=\frac{\sum_{k=1}^{K}\nu(D_{k})R(B_{k})\big(1-\theta(B_{k})\big)}{\sum_{k=1}^{K}\nu(D_{k})R(B_{k})}%20I_{\big\{\sum_{k=1}^{K}\nu(D_{k})R(B_{k})%20%3E%200\big\}})
+![FOCR-Definition.svg](https://raw.githubusercontent.com/dipterix/focr/main/inst/definition.svg)
 
 * Stage-II: given the previous rejection (clusters), calculate conditional p-values in a post-selection fashion. Then a further selection procedure will be applied to the conditional p-values to control the FDR (at individual level).
 

@@ -28,8 +28,7 @@ type-I error in the following two stages:
     *B*<sub>*k*</sub> are the overlapped clusters (blocks), and
     *D*<sub>*k*</sub> are the corresponding disjoint kernels;
 
-> ![FOCR Fomula
-> here](https://render.githubusercontent.com/render/math?math=\frac{\sum_{k=1}^{K}\nu(D_{k})R(B_{k})\big(1-\theta(B_{k})\big)}{\sum_{k=1}^{K}\nu(D_{k})R(B_{k})}%20I_{\big\{\sum_{k=1}^{K}\nu(D_{k})R(B_{k})%20%3E%200\big\}})
+![FOCR-Definition.svg](https://raw.githubusercontent.com/dipterix/focr/main/inst/definition.svg)
 
 -   Stage-II: given the previous rejection (clusters), calculate
     conditional p-values in a post-selection fashion. Then a further
