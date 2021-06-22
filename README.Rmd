@@ -28,9 +28,10 @@ H_{0}(s): \mu(s) = 0,\quad H_{1}(s):\mu(s)\neq 0
 In functional data analysis, the underlying function $\mu(s)$ may be subject to topological constraints (temporal, spatial, ...). The functional domain is also uncountable. 
 It is scientifically meaningful to extract blocks (clusters, or connected regions) of $s$ such that $H_{0}(s)$ are rejected. The FOCR framework controls the type-I error in the following two stages:
 
-* Stage-I: given blocks of hypotheses, control the FOCR (an extended false cluster rate) at given level. This step is to find connected regions of interests. The FOCR is defined as: <br /><br />
-$\text{FOCR} = \mathbb{E}\left[V  / R \times I_{\{R>0\}}\right],$ <br /><br />
-where $V={\sum}_{k}\nu(D_{k})R(B_{k})(1-\theta(B_{k}))$ and $R=\sum_{k}\nu(D_{k})R(B_{k})$. $B_{k}$ are the overlapped clusters (blocks) and $D_{k}$ are the corresponding disjoint kernels;
+* Stage-I: given blocks of hypotheses, control the FOCR (an extended false cluster rate) at given level. This step is to find connected regions of interests. The FOCR is defined as follow, where $B_{k}$ are the overlapped clusters (blocks), and $D_{k}$ are the corresponding disjoint kernels;
+
+> ![FOCR Fomula here](https://render.githubusercontent.com/render/math?math=\frac{\sum_{k=1}^{K}\nu(D_{k})R(B_{k})\big(1-\theta(B_{k})\big)}{\sum_{k=1}^{K}\nu(D_{k})R(B_{k})}%20I_{\big\{\sum_{k=1}^{K}\nu(D_{k})R(B_{k})%20%3E%200\big\}})
+
 * Stage-II: given the previous rejection (clusters), calculate conditional p-values in a post-selection fashion. Then a further selection procedure will be applied to the conditional p-values to control the FDR (at individual level).
 
 Please read [vignettes](http://github.dipterix.org/focr/articles/false-overlapped-cluster-rate.html), and [help documents](http://github.dipterix.org/focr/reference/focr.html) for more examples.

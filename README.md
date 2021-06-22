@@ -24,13 +24,13 @@ type-I error in the following two stages:
 
 -   Stage-I: given blocks of hypotheses, control the FOCR (an extended
     false cluster rate) at given level. This step is to find connected
-    regions of interests. The FOCR is defined as: <br /><br />
-    FOCR = 𝔼\[*V*/*R*×*I*<sub>{*R* &gt; 0}</sub>\], <br /><br /> where
-    *V* = ∑<sub>*k*</sub>*ν*(*D*<sub>*k*</sub>)*R*(*B*<sub>*k*</sub>)(1 − *θ*(*B*<sub>*k*</sub>))
-    and
-    *R* = ∑<sub>*k*</sub>*ν*(*D*<sub>*k*</sub>)*R*(*B*<sub>*k*</sub>).
-    *B*<sub>*k*</sub> are the overlapped clusters (blocks) and
+    regions of interests. The FOCR is defined as follow, where
+    *B*<sub>*k*</sub> are the overlapped clusters (blocks), and
     *D*<sub>*k*</sub> are the corresponding disjoint kernels;
+
+> ![FOCR Fomula
+> here](https://render.githubusercontent.com/render/math?math=\frac{\sum_{k=1}^{K}\nu(D_{k})R(B_{k})\big(1-\theta(B_{k})\big)}{\sum_{k=1}^{K}\nu(D_{k})R(B_{k})}%20I_{\big\{\sum_{k=1}^{K}\nu(D_{k})R(B_{k})%20%3E%200\big\}})
+
 -   Stage-II: given the previous rejection (clusters), calculate
     conditional p-values in a post-selection fashion. Then a further
     selection procedure will be applied to the conditional p-values to
