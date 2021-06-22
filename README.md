@@ -1,17 +1,51 @@
 
-# False overlapped-cluster rate
+# False Overlapped-Cluster Rate (FOCR)
 
 <!-- badges: start -->
 
+[![Lifecycle:
+experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
+[![CRAN
+status](https://www.r-pkg.org/badges/version/focr)](https://CRAN.R-project.org/package=focr)
 [![R-CMD-check](https://github.com/dipterix/focr/workflows/R-CMD-check/badge.svg)](https://github.com/dipterix/focr/actions)
 <!-- badges: end -->
 
-A two-stage procedure for multiple testing problems with toppological
-constraints.
+A two-stage procedure to solve the following multiple testing problems
+with topological constraints:
+
+*H*<sub>0</sub>(*s*) : *μ*(*s*) = 0,  *H*<sub>1</sub>(*s*) : *μ*(*s*) ≠ 0
+
+In functional data analysis, the underlying function *μ*(*s*) may be
+subject to topological constraints (temporal, spatial, …). The
+functional domain is also uncountable. It is scientifically meaningful
+to extract blocks (clusters, or connected regions) of *s* such that
+*H*<sub>0</sub>(*s*) are rejected. The FOCR framework controls the
+type-I error in the following two stages:
+
+-   Stage-I: given blocks of hypotheses, control the FOCR (an extended
+    false cluster rate) at given level. This step is to find connected
+    regions of interests. The FOCR is defined as: <br /><br />
+    FOCR = 𝔼\[*V*/*R*×*I*<sub>{*R* &gt; 0}</sub>\],
+    <br /><br /> where
+    *V* = ∑<sub>*k*</sub>*ν*(*D*<sub>*k*</sub>)*R*(*B*<sub>*k*</sub>)(1 − *θ*(*B*<sub>*k*</sub>))
+    and
+    *R* = ∑<sub>*k*</sub>*ν*(*D*<sub>*k*</sub>)*R*(*B*<sub>*k*</sub>).
+    *B*<sub>*k*</sub> are the overlapped clusters (blocks) and
+    *D*<sub>*k*</sub> are the corresponding disjoint kernels;
+-   Stage-II: given the previous rejection (clusters), calculate
+    conditional p-values in a post-selection fashion. Then a further
+    selection procedure will be applied to the conditional p-values to
+    control the FDR (at individual level).
+
+Please read
+[vignettes](http://github.dipterix.org/focr/articles/false-overlapped-cluster-rate.html),
+and [help
+documents](http://github.dipterix.org/focr/reference/focr.html) for more
+examples.
 
 ## Installation
 
-You can install the released version of focr from
+You can install the released version of `focr` from
 [CRAN](https://CRAN.R-project.org) with:
 
 ``` r
@@ -27,36 +61,26 @@ remotes::install_github("dipterix/focr")
 
 ## Example
 
-This is a basic example which shows you how to solve a common problem:
+Let’s sample from this 2D image (`32x32` pixels). The underlying signal
+is a triangle. The noise is generated with correlation.
+
+<img src="man/figures/README-data-1.png" width="100%" />
+
+Example code:
 
 ``` r
-library(focr)
-## basic example code
+res <- focr(data, block_size = 3, alpha = 0.05, 
+            fdr_method = 'BH', dimension = c(32,32))
 ```
 
-What is special about using `README.Rmd` instead of just `README.md`?
-You can include R chunks like so:
+The initial clusters, conditional p-values, and final rejections are
+displayed as follows:
 
-``` r
-summary(cars)
-#>      speed           dist       
-#>  Min.   : 4.0   Min.   :  2.00  
-#>  1st Qu.:12.0   1st Qu.: 26.00  
-#>  Median :15.0   Median : 36.00  
-#>  Mean   :15.4   Mean   : 42.98  
-#>  3rd Qu.:19.0   3rd Qu.: 56.00  
-#>  Max.   :25.0   Max.   :120.00
-```
+<img src="man/figures/README-unnamed-chunk-2-1.png" width="100%" />
 
-You’ll still need to render `README.Rmd` regularly, to keep `README.md`
-up-to-date. `devtools::build_readme()` is handy for this. You could also
-use GitHub Actions to re-render `README.Rmd` every time you push. An
-example workflow can be found here:
-<https://github.com/r-lib/actions/tree/master/examples>.
+For detailed usage, please read
+[vignettes](http://github.dipterix.org/focr/articles/false-overlapped-cluster-rate.html),
+and [help
+documents](http://github.dipterix.org/focr/reference/focr.html).
 
-You can also embed plots, for example:
-
-<img src="man/figures/README-pressure-1.png" width="100%" />
-
-In that case, don’t forget to commit and push the resulting figure
-files, so they display on GitHub and CRAN.
+## Citations
