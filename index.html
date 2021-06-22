@@ -100,9 +100,7 @@
 <ul>
 <li>Stage-I: given blocks of hypotheses, control the FOCR (an extended false cluster rate) at given level. This step is to find connected regions of interests. The FOCR is defined as follow, where <em>B</em><sub><em>k</em></sub> are the overlapped clusters (blocks), and <em>D</em><sub><em>k</em></sub> are the corresponding disjoint kernels;</li>
 </ul>
-<blockquote>
-<p><img src="https://render.githubusercontent.com/render/math?math=%5Cfrac%7B%5Csum_%7Bk=1%7D%5E%7BK%7D%5Cnu(D_%7Bk%7D)R(B_%7Bk%7D)%5Cbig(1-%5Ctheta(B_%7Bk%7D)%5Cbig)%7D%7B%5Csum_%7Bk=1%7D%5E%7BK%7D%5Cnu(D_%7Bk%7D)R(B_%7Bk%7D)%7D%20I_%7B%5Cbig%7B%5Csum_%7Bk=1%7D%5E%7BK%7D%5Cnu(D_%7Bk%7D)R(B_%7Bk%7D)%20%3E%200%5Cbig%7D%7D" alt="FOCR Fomula here"></p>
-</blockquote>
+<p><img src="https://raw.githubusercontent.com/dipterix/focr/main/inst/definition.svg" alt="FOCR-Definition.svg"></p>
 <ul>
 <li>Stage-II: given the previous rejection (clusters), calculate conditional p-values in a post-selection fashion. Then a further selection procedure will be applied to the conditional p-values to control the FDR (at individual level).</li>
 </ul>
