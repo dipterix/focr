@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>http://github.dipterix.org/focr/index.html</loc>
+  </url>
+  <url>
+    <loc>http://github.dipterix.org/focr/reference/abseg.html</loc>
+  </url>
+  <url>
+    <loc>http://github.dipterix.org/focr/reference/fdp-pwr.html</loc>
+  </url>
+  <url>
+    <loc>http://github.dipterix.org/focr/reference/fdr-controls.html</loc>
+  </url>
+  <url>
+    <loc>http://github.dipterix.org/focr/reference/focr.html</loc>
+  </url>
+  <url>
+    <loc>http://github.dipterix.org/focr/reference/simulation.html</loc>
+  </url>
+  <url>
+    <loc>http://github.dipterix.org/focr/articles/false-overlapped-cluster-rate.html</loc>
+  </url>
+</urlset>
