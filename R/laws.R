@@ -32,12 +32,27 @@ laws_sabha_gauss <- function(
   res
 }
 
+get_bandwidth <- function(l, d){
+  if(system.file('', package = 'kedd') == ''){
+    stop("Bandwidth is NA. Please install `kedd` package to automatically calculate the bandwidth for LAWS and SABHA methods")
+  }
+  if(length(d)){
+    bw <- kedd::h.ccv(seq_len(max(d)))
+  } else {
+    bw <- kedd::h.ccv(seq_len(l))
+  }
+  bw$h
+}
+
 laws_pval <- function(pv, bandwidth, dimension = c("one", "two", "three"), alpha = 0.05, initial_filter = 0.9){
+  if(is.na(bandwidth)){
+    get_bandwidth(length(pv), dim(pv))
+  }
   dimension <- match.arg(dimension)
   bh.th<-BH(pv, initial_filter)$tau
-  if(bandwidth < 1){
-    bandwidth <- bandwidth * length(pv)
-  }
+  # if(bandwidth < 1){
+  #   bandwidth <- bandwidth * length(pv)
+  # }
   switch (
     dimension,
     'one' = { pis.hat<-pis_1D.func(pv, tau=bh.th, h=bandwidth) },
@@ -61,6 +76,9 @@ laws_pval <- function(pv, bandwidth, dimension = c("one", "two", "three"), alpha
 
 
 sabha_pval <- function(pv, bandwidth, dimension = c("one", "two", "three"), alpha = 0.05, initial_filter = 0.9){
+  if(is.na(bandwidth)){
+    get_bandwidth(length(pv), dim(pv))
+  }
   dimension <- match.arg(dimension)
   bh.th<-BH(pv, initial_filter)$tau
   switch (

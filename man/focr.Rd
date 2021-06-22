@@ -22,7 +22,7 @@ focr(
   block_size,
   alpha = 0.05,
   fdr_method = c("BH", "LAWS", "SABHA", "BY"),
-  bandwidth = block_size/2,
+  bandwidth = if (missing(block_size)) {     NA } else {     block_size/2 },
   initial_filter = 0.9,
   dimension = NULL,
   distance_measure = c("euclidean", "lmax", "manhattan"),
@@ -60,10 +60,13 @@ and \code{'left'} or \code{'right'} if one-sided.}
 
 \item{fdr_method}{characters or function of post-selection FDR control
 procedures. Built-in choices are \code{"BH"}, \code{"BY"}, \code{"SABHA"},
-and \code{"LAWS"}. See vignette for details.}
+and \code{"LAWS"}. See vignette for details, see also
+\code{\link{fdr-controls}}.}
 
 \item{bandwidth}{used by \code{\link{LAWS}} and \code{\link{LAWS}} as
-smoothing parameters to estimate the underlying sparsity level.}
+smoothing parameters to estimate the underlying sparsity level. Default
+is half of \code{block_size}. If \code{block_size} is missing,
+\code{bandwidth} must be specified.}
 
 \item{initial_filter}{used by \code{\link{LAWS}} and \code{\link{LAWS}} as
 initial filters (purity) to remove large p-values}
@@ -74,10 +77,54 @@ supports 1-3 dimensions.}
 
 \item{distance_measure}{distance measure used to form blocks; see 'Details'.}
 }
+\value{
+A list of results
+\describe{
+\item{\code{method}}{method name}
+\item{\code{alpha}}{level of significance: FOCR in the stage-I and FDR in
+the stage-II}
+\item{\code{side}}{passed from input}
+\item{\code{blocks}}{function that returns indices of blocks}
+\item{\code{nblocks}}{number of total blocks}
+\item{\code{rej_blocks}}{blocks being rejected}
+\item{\code{rej_hypotheses}}{individual hypotheses rejected in the first
+stage}
+\item{\code{tau}}{p-value cutoff in the first stage}
+\item{\code{cond_pvals}}{conditional p-values in the stage-II}
+\item{\code{uncond_pvals}}{unconditional p-values}
+\item{\code{details}}{details of initial rejections}
+\item{\code{stats}}{block-level test statistics and p-values}
+}
+The following additional items are \code{focr} only.
+\describe{
+\item{\code{post_selection}}{a list returned by FDR controlling methods,
+see also \code{\link{fdr-controls}}}
+\item{\code{fdr_method}}{function used to control the FDR in stage-II}
+\item{\code{block_size}}{block size if specified, passed from input}
+}
+}
 \description{
 False overlapped-cluster rate (FOCR) control procedures
 }
 \details{
+The function \code{focr} and \code{focr_initial} control the type-I error
+for multiple testing problems with topological constraints:
+\deqn{
+H_{0}(s):f(s)=\mu(s), H_{1}(s):f(s)\neq \mu(s)
+}{H_{0}(s):f(s)=\mu(s), H_{1}(s):f(s)\neq \mu(s)}
+
+The type-I error control procedure has two stages. In the first stage,
+the FOCR is controlled at block (overlapped-cluster) level. This step is
+to find regions of interests that respect the topological constraints. The
+second stage further inspects the hypotheses rejected by the first stage.
+During this stage, conditional p-values will be calculated in a
+post-selection fashion. FDR control methods are further applied to these
+conditional p-values to select significant hypotheses at individual level.
+
+Function \eqn{\mu(s)} is specified in \code{mu}. By default the alternative
+hypothesis is two-sided. For one-sided tests, please change the parameter
+\code{side} to either \code{"left"} or \code{"right"}.
+
 The function \code{focr_initial} controls the FOCR on the block level
 (stage-I), and calculates the conditional p-values. The function \code{focr}
 uses \code{focr_initial}, providing default block settings and built-in
@@ -92,4 +139,81 @@ or temporal situations. However, in case the blocks are to be customized,
 please specify \code{blocks} manually. The argument \code{blocks} can be
 either a list of hypothesis indices, or a function that returns ones given
 by locations of hypotheses. See 'vignette'
+\href{../doc/false-overlapped-cluster-rate.html}{
+\code{vignette('false-overlapped-cluster-rate', package='focr')}}.
+}
+\examples{
+
+
+library(focr)
+set.seed(100)
+generator <- simulation_data(n_points = 1000, mu_type = 'step',
+                             cov_type = 'AR')
+data <- generator$gen_data(snr = 0.34)
+plot(generator, data = data, snr = 0.34)
+
+# -------------------- Basic usage -------------------------
+# FOCR-BH procedure
+res <- focr(data = data, block_size = 41,
+            alpha = 0.05, fdr_method = 'BH')
+
+# False discovery proportion
+fdp <- fdp(res$post_selection$rejs, generator$support)
+fdp
+
+# Statistical power
+power <- pwr(res$post_selection$rejs, generator$support)
+power
+
+# Visualize
+plot(generator$mu, type = 'l', col = 'red', ylim = c(-.5,1.5),
+     main = sprintf('FOCR-BH, FDP=\%.1f\%\%, Power=\%.1f\%\%',
+                    fdp*100, power * 100))
+lines(res$cond_pvals, col = 'gray')
+abseg(res$rej_hypotheses, y = -0.3, col = 'orange3', lwd = 2)
+abseg(res$post_selection$rejs, y = -0.5, col = 'blue', lwd = 2)
+legend('topleft', c("Underlying signal", "Conditional p-values",
+                    "FOCR initial clusters", "FOCR-BH final rejections"),
+       col = c('red', 'orange3', 'blue'), lty = 1, cex = 0.7)
+
+# ------------------------- Change FDR methods --------------------
+# FOCR-LAWS
+res <- focr(data = data, block_size = 41,
+            alpha = 0.05, fdr_method = 'LAWS',
+            initial_filter = 0.5)
+fdp <- fdp(res$post_selection$rejs, generator$support)
+fdp
+power <- pwr(res$post_selection$rejs, generator$support)
+power
+
+# Visualize
+plot(generator$mu, type = 'l', col = 'red', ylim = c(-.5,1.5),
+     main = sprintf('FOCR-LAWS, FDP=\%.1f\%\%, Power=\%.1f\%\%',
+                    fdp*100, power * 100))
+lines(res$cond_pvals, col = 'gray')
+abseg(res$rej_hypotheses, y = -0.3, col = 'orange3', lwd = 2)
+abseg(res$post_selection$rejs, y = -0.5, col = 'blue', lwd = 2)
+legend('topleft', c("Underlying signal", "Conditional p-values",
+                    "FOCR initial clusters", "FOCR-LAWS final rejections"),
+       col = c('red', 'orange3', 'blue'), lty = 1, cex = 0.7)
+
+# ------------------------- Customized blocks --------------------
+
+# The following example uses disjoint blocks; each block has length of 40
+res <- focr(data = data, alpha = 0.05, fdr_method = 'LAWS',
+            initial_filter = 0.5, blocks = function(index){
+              # Disjoint blocks with size 40
+              floor((index -1)/40) * 40 + seq_len(40)
+            }, bandwidth = 20)
+
+
+# Compared to overlapped blocks, disjoint blocks are less powerful
+# However, if this might be useful provided the underlying topological
+# structure is disjoint
+fdp <- fdp(res$post_selection$rejs, generator$support)
+fdp
+power <- pwr(res$post_selection$rejs, generator$support)
+power
+
+
 }

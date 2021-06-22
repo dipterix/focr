@@ -16,17 +16,38 @@
 #' and \code{'left'} or \code{'right'} if one-sided.
 #' @param fdr_method characters or function of post-selection FDR control
 #' procedures. Built-in choices are \code{"BH"}, \code{"BY"}, \code{"SABHA"},
-#' and \code{"LAWS"}. See vignette for details.
+#' and \code{"LAWS"}. See vignette for details, see also
+#' \code{\link{fdr-controls}}.
 #' @param dimension the dimension information of input hypotheses. For
 #' \code{\link{LAWS}} and \code{\link{LAWS}}, current implementation only
 #' supports 1-3 dimensions.
 #' @param bandwidth used by \code{\link{LAWS}} and \code{\link{LAWS}} as
-#' smoothing parameters to estimate the underlying sparsity level.
+#' smoothing parameters to estimate the underlying sparsity level. Default
+#' is half of \code{block_size}. If \code{block_size} is missing,
+#' \code{bandwidth} must be specified.
 #' @param initial_filter used by \code{\link{LAWS}} and \code{\link{LAWS}} as
 #' initial filters (purity) to remove large p-values
 #' @param distance_measure distance measure used to form blocks; see 'Details'.
 #' @param ... passed to \code{focr_initial} and \code{fdr_method}
 #' @details
+#' The function \code{focr} and \code{focr_initial} control the type-I error
+#' for multiple testing problems with topological constraints:
+#' \deqn{
+#' H_{0}(s):f(s)=\mu(s), H_{1}(s):f(s)\neq \mu(s)
+#' }{H_{0}(s):f(s)=\mu(s), H_{1}(s):f(s)\neq \mu(s)}
+#'
+#' The type-I error control procedure has two stages. In the first stage,
+#' the FOCR is controlled at block (overlapped-cluster) level. This step is
+#' to find regions of interests that respect the topological constraints. The
+#' second stage further inspects the hypotheses rejected by the first stage.
+#' During this stage, conditional p-values will be calculated in a
+#' post-selection fashion. FDR control methods are further applied to these
+#' conditional p-values to select significant hypotheses at individual level.
+#'
+#' Function \eqn{\mu(s)} is specified in \code{mu}. By default the alternative
+#' hypothesis is two-sided. For one-sided tests, please change the parameter
+#' \code{side} to either \code{"left"} or \code{"right"}.
+#'
 #' The function \code{focr_initial} controls the FOCR on the block level
 #' (stage-I), and calculates the conditional p-values. The function \code{focr}
 #' uses \code{focr_initial}, providing default block settings and built-in
@@ -41,6 +62,106 @@
 #' please specify \code{blocks} manually. The argument \code{blocks} can be
 #' either a list of hypothesis indices, or a function that returns ones given
 #' by locations of hypotheses. See 'vignette'
+#' \href{../doc/false-overlapped-cluster-rate.html}{
+#' \code{vignette('false-overlapped-cluster-rate', package='focr')}}.
+#'
+#' @return A list of results
+#' \describe{
+#' \item{\code{method}}{method name}
+#' \item{\code{alpha}}{level of significance: FOCR in the stage-I and FDR in
+#' the stage-II}
+#' \item{\code{side}}{passed from input}
+#' \item{\code{blocks}}{function that returns indices of blocks}
+#' \item{\code{nblocks}}{number of total blocks}
+#' \item{\code{rej_blocks}}{blocks being rejected}
+#' \item{\code{rej_hypotheses}}{individual hypotheses rejected in the first
+#' stage}
+#' \item{\code{tau}}{p-value cutoff in the first stage}
+#' \item{\code{cond_pvals}}{conditional p-values in the stage-II}
+#' \item{\code{uncond_pvals}}{unconditional p-values}
+#' \item{\code{details}}{details of initial rejections}
+#' \item{\code{stats}}{block-level test statistics and p-values}
+#' }
+#' The following additional items are \code{focr} only.
+#' \describe{
+#' \item{\code{post_selection}}{a list returned by FDR controlling methods,
+#' see also \code{\link{fdr-controls}}}
+#' \item{\code{fdr_method}}{function used to control the FDR in stage-II}
+#' \item{\code{block_size}}{block size if specified, passed from input}
+#' }
+#'
+#' @examples
+#'
+#'
+#' library(focr)
+#' set.seed(100)
+#' generator <- simulation_data(n_points = 1000, mu_type = 'step',
+#'                              cov_type = 'AR')
+#' data <- generator$gen_data(snr = 0.34)
+#' plot(generator, data = data, snr = 0.34)
+#'
+#' # -------------------- Basic usage -------------------------
+#' # FOCR-BH procedure
+#' res <- focr(data = data, block_size = 41,
+#'             alpha = 0.05, fdr_method = 'BH')
+#'
+#' # False discovery proportion
+#' fdp <- fdp(res$post_selection$rejs, generator$support)
+#' fdp
+#'
+#' # Statistical power
+#' power <- pwr(res$post_selection$rejs, generator$support)
+#' power
+#'
+#' # Visualize
+#' plot(generator$mu, type = 'l', col = 'red', ylim = c(-.5,1.5),
+#'      main = sprintf('FOCR-BH, FDP=%.1f%%, Power=%.1f%%',
+#'                     fdp*100, power * 100))
+#' lines(res$cond_pvals, col = 'gray')
+#' abseg(res$rej_hypotheses, y = -0.3, col = 'orange3', lwd = 2)
+#' abseg(res$post_selection$rejs, y = -0.5, col = 'blue', lwd = 2)
+#' legend('topleft', c("Underlying signal", "Conditional p-values",
+#'                     "FOCR initial clusters", "FOCR-BH final rejections"),
+#'        col = c('red', 'orange3', 'blue'), lty = 1, cex = 0.7)
+#'
+#' # ------------------------- Change FDR methods --------------------
+#' # FOCR-LAWS
+#' res <- focr(data = data, block_size = 41,
+#'             alpha = 0.05, fdr_method = 'LAWS',
+#'             initial_filter = 0.5)
+#' fdp <- fdp(res$post_selection$rejs, generator$support)
+#' fdp
+#' power <- pwr(res$post_selection$rejs, generator$support)
+#' power
+#'
+#' # Visualize
+#' plot(generator$mu, type = 'l', col = 'red', ylim = c(-.5,1.5),
+#'      main = sprintf('FOCR-LAWS, FDP=%.1f%%, Power=%.1f%%',
+#'                     fdp*100, power * 100))
+#' lines(res$cond_pvals, col = 'gray')
+#' abseg(res$rej_hypotheses, y = -0.3, col = 'orange3', lwd = 2)
+#' abseg(res$post_selection$rejs, y = -0.5, col = 'blue', lwd = 2)
+#' legend('topleft', c("Underlying signal", "Conditional p-values",
+#'                     "FOCR initial clusters", "FOCR-LAWS final rejections"),
+#'        col = c('red', 'orange3', 'blue'), lty = 1, cex = 0.7)
+#'
+#' # ------------------------- Customized blocks --------------------
+#'
+#' # The following example uses disjoint blocks; each block has length of 40
+#' res <- focr(data = data, alpha = 0.05, fdr_method = 'LAWS',
+#'             initial_filter = 0.5, blocks = function(index){
+#'               # Disjoint blocks with size 40
+#'               floor((index -1)/40) * 40 + seq_len(40)
+#'             }, bandwidth = 20)
+#'
+#'
+#' # Compared to overlapped blocks, disjoint blocks are less powerful
+#' # However, if this might be useful provided the underlying topological
+#' # structure is disjoint
+#' fdp <- fdp(res$post_selection$rejs, generator$support)
+#' fdp
+#' power <- pwr(res$post_selection$rejs, generator$support)
+#' power
 #'
 #'
 NULL
@@ -185,6 +306,8 @@ focr_initial <- function(data, data_corr, blocks, nblocks = ncol(data),
     method = "FOCR Initial Rejection (Stage-I)",
     alpha = alpha,
     side = side,
+    blocks = blocks,
+    nblocks = nblocks,
     rej_blocks = rej_stage_1$rejs,
     rej_hypotheses = rej_stage_1_locations,
     tau = rej_stage_1$tau,
@@ -195,45 +318,23 @@ focr_initial <- function(data, data_corr, blocks, nblocks = ncol(data),
   )
 }
 
-# tmp <- slide_window(ncol(data), 10)
-# res <- focr(data, blocks = tmp$window_idx, nblocks = length(tmp$center), verbose = TRUE)
-# rej <- BH(res$cond_pvals)
-# plot(res$cond_pvals, type='l')
-# lines(generator$mu, col = 'green')
-# lines(res$uncond_pvals, col = 'grey')
-# abseg(res$rej_hypotheses, 0, col = 'blue')
-# abseg(rej$rejs, 0, col = 'red')
-#
-# a <- focr_sliding_window(data, 10, debug = TRUE, method = 'BH', method2 = 'BH', alpha = 0.05)
-# plot(res$cond_pvals, type='l')
-# lines(a$post_pvals, col = 'purple')
-# abseg(a$post_selection, 0.5, col = 'blue')
-# abseg(rej$rejs, 0, col = 'red')
-# lines(generator$mu, col = 'green')
 
-# generator <- simulation_data(n_points = 900, n_obs = 100, mu_type = 'step')
-# data <- generator$gen_data(0.3)
-# res <- focr_sliding(data, 21, fdr_method = "BH", alpha = 0.05, verbose = TRUE, dimension = c(30,30))
-# plot(res$cond_pvals, type='l')
-# lines(generator$mu, col = 'green')
-# abseg(res$post_selection$rejs, 0.48, col = 'red')
-# fdp(res$post_selection$rejs, generator$support)
-#
-# head(res$stats); head(a$details$stats)
-# res$cond_pvals - a$post_pvals
-# res <- focr_sliding_1D(data, 21, fdr_method = "laws_pval", alpha = 0.05, verbose = TRUE)
-# res
-# res$post_selection$rejs
 
 #' @rdname focr
 #' @export
 focr <- function(data, block_size, alpha = 0.05, fdr_method = c('BH', 'LAWS', 'SABHA', 'BY'),
-                 bandwidth = block_size / 2, initial_filter = 0.9, dimension = NULL,
+                 bandwidth = if(missing(block_size)){NA}else{block_size/2},
+                 initial_filter = 0.9, dimension = NULL,
                  distance_measure = c('euclidean', 'lmax', 'manhattan'),
                  side = c('two', 'left', 'right'), verbose = FALSE,
                  blocks, ...){
   debug <- function(...){ debug_verbose(..., verbose = verbose) }
   M <- ncol(data)
+
+  if(is.na(bandwidth) && system.file('', package = 'kedd') == ''){
+    warnings('bandwidth is NA. Please install `kedd` package if you are using "LAWS" or "SABHA" method')
+  }
+
   if(length(dimension) <= 1){
     dimension <- NULL
     ndims <- 1
@@ -247,7 +348,9 @@ focr <- function(data, block_size, alpha = 0.05, fdr_method = c('BH', 'LAWS', 'S
   distance_measure <- match.arg(distance_measure)
   debug('Distance measure: ', distance_measure)
   # prepare methods
+  method_name <- 'customized'
   if(is.character(fdr_method)){
+    method_name <- fdr_method
     debug('FDR method: ', fdr_method)
     if(fdr_method %in% c('LAWS', 'SABHA') && length(dimension) > 3){
       stop("`LAWS` and `SABHA` implementations only support 1D, 2D, 3D spatial data.")
@@ -332,11 +435,11 @@ focr <- function(data, block_size, alpha = 0.05, fdr_method = c('BH', 'LAWS', 'S
   debug('Finalizing, post-selection results is included as "ret$post_selection".')
   res1$post_selection <- res2
   res1$fdr_method <- fdr_method
-  res1$window_idx <- window_idx
   if(!missing(block_size)){
     res1$block_size <- block_size
   }
 
+  res1$method <- sprintf('FOCR-%s', method_name)
   res1
 
 }
@@ -500,3 +603,33 @@ focr_partition <- function(data, radius, alpha = 0.05,
   )
 }
 
+
+# tmp <- slide_window(ncol(data), 10)
+# res <- focr(data, blocks = tmp$window_idx, nblocks = length(tmp$center), verbose = TRUE)
+# rej <- BH(res$cond_pvals)
+# plot(res$cond_pvals, type='l')
+# lines(generator$mu, col = 'green')
+# lines(res$uncond_pvals, col = 'grey')
+# abseg(res$rej_hypotheses, 0, col = 'blue')
+# abseg(rej$rejs, 0, col = 'red')
+#
+# a <- focr_sliding_window(data, 10, debug = TRUE, method = 'BH', method2 = 'BH', alpha = 0.05)
+# plot(res$cond_pvals, type='l')
+# lines(a$post_pvals, col = 'purple')
+# abseg(a$post_selection, 0.5, col = 'blue')
+# abseg(rej$rejs, 0, col = 'red')
+# lines(generator$mu, col = 'green')
+
+# generator <- simulation_data(n_points = 900, n_obs = 100, mu_type = 'step')
+# data <- generator$gen_data(0.3)
+# res <- focr_sliding(data, 21, fdr_method = "BH", alpha = 0.05, verbose = TRUE, dimension = c(30,30))
+# plot(res$cond_pvals, type='l')
+# lines(generator$mu, col = 'green')
+# abseg(res$post_selection$rejs, 0.48, col = 'red')
+# fdp(res$post_selection$rejs, generator$support)
+#
+# head(res$stats); head(a$details$stats)
+# res$cond_pvals - a$post_pvals
+# res <- focr_sliding_1D(data, 21, fdr_method = "laws_pval", alpha = 0.05, verbose = TRUE)
+# res
+# res$post_selection$rejs

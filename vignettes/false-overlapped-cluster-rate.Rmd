@@ -78,6 +78,7 @@ Next, we perform the `FOCR-BH` procedure in one line.
 dim(data)
 res <- focr(data = data, block_size = 3, 
             alpha = 0.05, fdr_method = 'BH', 
+            initial_filter = 0.9,
             dimension = dim(mu))
 ```
 

@@ -56,10 +56,25 @@ NULL
 #' @rdname fdr-controls
 #' @export
 LAWS <- laws_pval
+# function(pv, bandwidth, dimension = c("one", "two", "three"),
+#                  alpha = 0.05, initial_filter = 0.9){
+#   dimension <- match.arg(dimension)
+#   tau <- BH(pv, initial_filter)$tau
+#   laws_pval(pv = pv, bandwidth = bandwidth, dimension = dimension,
+#             alpha = alpha, initial_filter = tau)
+# }
 
 #' @rdname fdr-controls
 #' @export
 SABHA <- sabha_pval
+
+# function(pv, bandwidth, dimension = c("one", "two", "three"),
+#                   alpha = 0.05, initial_filter = 0.9){
+#   dimension <- match.arg(dimension)
+#   tau <- BH(pv, initial_filter)$tau
+#   sabha_pval(pv = pv, bandwidth = bandwidth, dimension = dimension,
+#              alpha = alpha, initial_filter = tau)
+# }
 
 #' @rdname fdr-controls
 #' @export
