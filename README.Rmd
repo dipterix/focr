@@ -43,7 +43,6 @@ You can install the released version of `focr` from [CRAN](https://CRAN.R-projec
 ``` r
 install.packages("focr")
 ```
-
 And the development version from [GitHub](https://github.com/) with:
 
 ``` r
@@ -57,7 +56,7 @@ Let's sample from this 2D image (`32x32` pixels). The underlying signal is a tri
 ```{r data, message=FALSE, echo=FALSE, fig.height=4}
 library(focr)
 set.seed(400)
-generator <- simulation_data_2d(cov_type = 'AR')
+generator <- simulation_data_2D(cov_type = 'AR')
 data <- generator$gen_data(0.4)
 par(mfrow=c(1,2))
 image(matrix(generator$mu, 32), main = 'Undelying mean')
@@ -77,16 +76,16 @@ The initial clusters, conditional p-values, and final rejections are displayed a
 par(mfrow=c(1,3))
 mat <- matrix(0, 32, 32)
 mat[res$rej_hypotheses] <- 1
-image(mat, main = "FOCR initial rejections (FOCR=0.05)")
+image(mat, main = "FOCR initial rejections", sub = "(FOCR=0.05)")
 
 image(1-matrix(res$cond_pvals, 32, 32), main = "Conditional p-values")
 
 mat <- matrix(0, 32, 32)
 mat[res$post_selection$rejs] <- 1
-image(mat, main = "FOCR-BH final rejections (FDR=0.05)")
+image(mat, main = "FOCR-BH final rejections", sub = "(FDR=0.05)")
 ```
 
-For detailed usage, please read [vignettes](http://github.dipterix.org/focr/articles/false-overlapped-cluster-rate.html), and [help documents](http://github.dipterix.org/focr/reference/focr.html).
+Further reading materials:  [vignettes](http://github.dipterix.org/focr/articles/false-overlapped-cluster-rate.html), and [help documents](http://github.dipterix.org/focr/reference/focr.html).
 
 
 ## Citations

@@ -95,7 +95,7 @@
 #'
 #' library(focr)
 #' set.seed(100)
-#' generator <- simulation_data(n_points = 1000, mu_type = 'step',
+#' generator <- simulation_data_1D(n_points = 1000, mu_type = 'step',
 #'                              cov_type = 'AR')
 #' data <- generator$gen_data(snr = 0.34)
 #' plot(generator, data = data, snr = 0.34)
@@ -350,6 +350,9 @@ focr <- function(data, block_size, alpha = 0.05, fdr_method = c('BH', 'LAWS', 'S
   # prepare methods
   method_name <- 'customized'
   if(is.character(fdr_method)){
+    if(length(fdr_method) > 1){
+      fdr_method <- match.arg(fdr_method)
+    }
     method_name <- fdr_method
     debug('FDR method: ', fdr_method)
     if(fdr_method %in% c('LAWS', 'SABHA') && length(dimension) > 3){
@@ -620,7 +623,7 @@ focr_partition <- function(data, radius, alpha = 0.05,
 # abseg(rej$rejs, 0, col = 'red')
 # lines(generator$mu, col = 'green')
 
-# generator <- simulation_data(n_points = 900, n_obs = 100, mu_type = 'step')
+# generator <- simulation_data_1D(n_points = 900, n_obs = 100, mu_type = 'step')
 # data <- generator$gen_data(0.3)
 # res <- focr_sliding(data, 21, fdr_method = "BH", alpha = 0.05, verbose = TRUE, dimension = c(30,30))
 # plot(res$cond_pvals, type='l')

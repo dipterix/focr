@@ -76,7 +76,7 @@ displayed as follows:
 
 <img src="man/figures/README-unnamed-chunk-2-1.png" width="100%" />
 
-For detailed usage, please read
+Further reading materials:
 [vignettes](http://github.dipterix.org/focr/articles/false-overlapped-cluster-rate.html),
 and [help
 documents](http://github.dipterix.org/focr/reference/focr.html).

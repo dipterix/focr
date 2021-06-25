@@ -375,15 +375,16 @@ pis_2D.func <- function(pval, tau = 0.1, h = 10)
   m <- dims[1] * dims[2]
   # x.vec <- c(t(x))
   pv.vec <- pval# 2 * pnorm(-abs(x.vec))
-  scr.idx <- which(pv.vec >= tau)
-  p.est <- matrix(rep(0, m), dims[1], dims[2])
+  scr.idx <- pv.vec >= tau
+  p.est <- array(0, dims)
+
 
   for (i in 1:dims[1])
   {
     for (j in 1:dims[2])
     {
       s <- c(i, j)
-      dis.vec <- disvec.func(dims, s)
+      dis.vec <- matrix(disvec.func(dims, s), byrow = TRUE, nrow = dims[[1]])
       kht <- dnorm(dis.vec, 0, h)
       p.est[i, j] <- min(1 - 1e-5, sum(kht[scr.idx]) / ((1 - tau) * sum(kht)))
     }

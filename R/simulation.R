@@ -83,8 +83,8 @@ gen_error <- function(n_points, type = c("AR", "exponential", "matern", "any", "
 
 #' @name simulation
 #' @title Generate simulation data used in the paper and vignettes
-#' @description \code{simulation_data} generates one-dimensional data,
-#' \code{simulation_data_2d} generates two-dimensional image data.
+#' @description \code{simulation_data_1D} generates one-dimensional data,
+#' \code{simulation_data_2D} generates two-dimensional image data.
 #' @param n_points number of hypotheses, less equal than 1000
 #' @param n_obs number of observations to generate
 #' @param mu_type underlying function type, choices are 'sine', 'step', and
@@ -95,6 +95,13 @@ gen_error <- function(n_points, type = c("AR", "exponential", "matern", "any", "
 #' @param custom function to generate mean function if \code{mu_type="custom"}
 #' @param corrupt whether to use corruption model to generate data instead of
 #' addition model
+#' @param generator list items returned by \code{simulation_data_1D}
+#' @param snr positive number to control the signal-to-noise ratio
+#' @param block_sizes integer vectors to control the block size;
+#' see \code{\link{focr}}
+#' @param initial_filter used by \code{LAWS} and \code{SABHA}; see
+#' \code{\link{focr}}, \code{\link{fdr-controls}}
+#' @param alpha 'FOCR' and 'FDR' level; default is \code{0.05}
 #' @param ... passed to internal function; see 'Details'
 #' @details
 #' When \code{mu_type} is 'custom', parameter \code{custom} needs to be a
@@ -119,7 +126,7 @@ gen_error <- function(n_points, type = c("AR", "exponential", "matern", "any", "
 #'
 #'
 #' # -------------------- Basic usage ------------------------
-#' generator <- simulation_data(200, cov_type = 'matern')
+#' generator <- simulation_data_1D(200, cov_type = 'matern')
 #'
 #' # generate date with signal-to-noise ratio = 0.4
 #' data <- generator$gen_data(snr = 0.4)
@@ -131,25 +138,35 @@ gen_error <- function(n_points, type = c("AR", "exponential", "matern", "any", "
 #'
 #' # -------------------- Change Matern parameters ------------------------
 #' # Control kappa/phi here
-#' generator <- simulation_data(200, cov_type = 'matern', kappa = 10)
+#' generator <- simulation_data_1D(200, cov_type = 'matern', kappa = 10)
 #' data <- generator$gen_data(snr = 0.4)
 #'
 #' image(cor(data), main = 'Smooth Matern correlation with kappa=10')
 #'
 #' # -------------------- 2D data ------------------------
 #' # generate a 2D triangle data
-#' generator <- simulation_data_2d(cov_type = 'AR')
+#' generator <- simulation_data_2D(cov_type = 'AR')
 #' data <- generator$gen_data(snr = 0.6)
 #'
 #' par(mfrow = c(1,2))
 #' image(matrix(colMeans(data), 32), main = '2D sample mean')
 #' image(matrix(generator$mu, 32), main = '2D underlying mean')
 #'
+#' # -------------------- Simulation used by paper ----------
+#' # might take a while to run
+#' if(interactive()){
+#'   generator <- simulation_data_1D(n_points = 1000, cov_type = 'AR')
+#'   set.seed(1000)
+#'   sim <- simulate_1D(generator, snr = 0.3)
+#'   plot(sim)
+#' }
+#'
 #'
 #' @export
-simulation_data <- function(n_points, n_obs = 100, mu_type = c("sine", "step", "custom"),
-                            cov_type = c("AR", "exponential", "matern", "any", "iid"),
-                            custom = NULL, corrupt = FALSE, ...){
+simulation_data_1D <- function(
+  n_points, n_obs = 100, mu_type = c("step", "sine", "custom"),
+  cov_type = c("AR", "exponential", "matern", "any", "iid"),
+  custom = NULL, corrupt = FALSE, ...){
   mu_type <- match.arg(mu_type)
   cov_type <- match.arg(cov_type)
   dat <- gen_error(n_points, type = cov_type, ...)
@@ -209,13 +226,13 @@ simulation_data <- function(n_points, n_obs = 100, mu_type = c("sine", "step", "
     n_obs = n_obs, n_points = dat$n_points,
     sd = dat$sd, cor = dat$cor,
     gen_data = gen_data,
-    .class = "focr_simulation_data"
+    .class = "focr_simulation_data_1d"
   )
 }
 
 #' @rdname simulation
 #' @export
-simulation_data_2d <- function(
+simulation_data_2D <- function(
   cov_type = c("iid", "AR", "exponential", "matern", "any"),
   n_obs = 100, corrupt = FALSE, ...
 ){
@@ -262,6 +279,113 @@ simulation_data_2d <- function(
   )
 }
 
+#' @rdname simulation
+#' @export
+simulate_1D <- function(generator, snr = 0.2, block_sizes = 21,
+                     initial_filter = 0.9, alpha = 0.05, bandwidth = 90){
+  y <- generator$gen_data(snr = snr)
+  FDPs <- list()
+  PWRs <- list()
+  FOCPs <- list()
+  rejs <- list()
+  purity_tau <- initial_filter
+  support <- generator$support
+  theta <- rep(0, generator$n_points)
+  theta[generator$support] <- 1
+  # Marginal p-values
+  x <- sqrt(generator$n_obs) * colMeans(y) / apply(y, 2, sd)
+  pv <- 2 * pnorm(-abs(x), 0, 1)
+  ## BH
+  bh.res<-BH(pv, alpha)
+  FDPs[["BH"]] <- fdp(bh.res$rejs, support)
+  PWRs[["BH"]] <- pwr(bh.res$rejs, support)
+  rejs[["BH"]] <- bh.res$rejs
+  laws_bw <- bandwidth
+  ## laws
+  law.dd.res <- LAWS(pv, laws_bw, dimension = "one", alpha = alpha,
+                     initial_filter = purity_tau)
+  FDPs[["LAWS"]] <- fdp(law.dd.res$rejs, support)
+  PWRs[["LAWS"]] <- pwr(law.dd.res$rejs, support)
+  rejs[["LAWS"]] <- law.dd.res$rejs
+  ## SABHA
+  sab.dd.res <- SABHA(pv, laws_bw, dimension = "one", alpha = alpha,
+                      initial_filter = purity_tau)
+  FDPs[["SABHA"]] <- fdp(sab.dd.res$rejs, support)
+  PWRs[["SABHA"]] <- pwr(sab.dd.res$rejs, support)
+  rejs[["SABHA"]] <- sab.dd.res$rejs
+  for(blk_s in block_sizes){
+    w <- blk_s
+    ## focr-Overlap-XXXX
+    focr.res <- focr(y, blk_s, alpha = alpha, fdr_method = "BH")
+    # XXXX = none (no post-selection)
+    tmp <- sapply(focr.res$rej_blocks, function(ctr){
+      !any(focr.res$blocks(ctr) %in% generator$support)
+    })
+    focp <- ifelse(length(tmp), mean(tmp), 0)
+    FOCPs[[sprintf("FOCR-O%d-RAW", w)]] <- focp
+    FDPs[[sprintf("FOCR-O%d-RAW", w)]] <- fdp(focr.res$rej_hypotheses, support)
+    PWRs[[sprintf("FOCR-O%d-RAW", w)]] <- pwr(focr.res$rej_hypotheses, support)
+    rejs[[sprintf("FOCR-O%d-RAW", w)]] <- focr.res$rej_hypotheses
+    # XXXX = BH
+    FDPs[[sprintf("FOCR-O%d-BH", w)]] <- fdp(focr.res$post_selection$rejs, support)
+    PWRs[[sprintf("FOCR-O%d-BH", w)]] <- pwr(focr.res$post_selection$rejs, support)
+    rejs[[sprintf("FOCR-O%d-BH", w)]] <- focr.res$post_selection$rejs
+    # XXXX = LAWS
+    focr.laws.res <- focr(y, blk_s, alpha = alpha, fdr_method = "LAWS",
+                          initial_filter = purity_tau)
+    FDPs[[sprintf("FOCR-O%d-LAWS", w)]] <- fdp(focr.laws.res$post_selection$rejs, support)
+    PWRs[[sprintf("FOCR-O%d-LAWS", w)]] <- pwr(focr.laws.res$post_selection$rejs, support)
+    rejs[[sprintf("FOCR-O%d-LAWS", w)]] <- focr.laws.res$post_selection$rejs
+    # XXXX = SABHA
+    focr.sabha.res <- focr(y, blk_s, alpha = alpha, fdr_method = "SABHA",
+                           initial_filter = purity_tau)
+    FDPs[[sprintf("FOCR-O%d-SABHA", w)]] <- fdp(focr.sabha.res$post_selection$rejs, support)
+    PWRs[[sprintf("FOCR-O%d-SABHA", w)]] <- pwr(focr.sabha.res$post_selection$rejs, support)
+    rejs[[sprintf("FOCR-O%d-SABHA", w)]] <- focr.sabha.res$post_selection$rejs
+    ## FOCR-Disjoint-XXXX
+    blocks <- function(ii){
+      floor((ii - 1) / w) * w + (1:w)
+    }
+    focr.res <- focr(y, alpha = alpha, fdr_method = 'BH', blocks = blocks)
+    # XXXX = none (no post-selection)
+    tmp <- sapply(focr.res$rej_blocks, function(ctr){
+      !any(blocks(ctr) %in% generator$support)
+    })
+    focp <- ifelse(length(tmp), mean(tmp), 0)
+    FOCPs[[sprintf("FOCR-D%d-RAW", w)]] <- focp
+    FDPs[[sprintf("FOCR-D%d-RAW", w)]] <- fdp(focr.res$rej_hypotheses, support)
+    PWRs[[sprintf("FOCR-D%d-RAW", w)]] <- pwr(focr.res$rej_hypotheses, support)
+    rejs[[sprintf("FOCR-D%d-RAW", w)]] <- focr.res$rej_hypotheses
+    # XXXX = BH
+    FDPs[[sprintf("FOCR-D%d-BH", w)]] <- fdp(focr.res$post_selection$rejs, support)
+    PWRs[[sprintf("FOCR-D%d-BH", w)]] <- pwr(focr.res$post_selection$rejs, support)
+    rejs[[sprintf("FOCR-D%d-BH", w)]] <- focr.res$post_selection$rejs
+    # XXXX = LAWS
+    focr.laws.res <- focr(y, alpha = alpha, fdr_method = 'LAWS', blocks = blocks,
+                          initial_filter = purity_tau)
+    FDPs[[sprintf("FOCR-D%d-LAWS", w)]] <- fdp(focr.laws.res$post_selection$rejs, support)
+    PWRs[[sprintf("FOCR-D%d-LAWS", w)]] <- pwr(focr.laws.res$post_selection$rejs, support)
+    rejs[[sprintf("FOCR-D%d-LAWS", w)]] <- focr.laws.res$post_selection$rejs
+    # XXXX = SABHA
+    focr.sabha.res <- focr(y, alpha = alpha, fdr_method = 'SABHA', blocks = blocks,
+                           initial_filter = purity_tau)
+    FDPs[[sprintf("FOCR-D%d-SABHA", w)]] <- fdp(focr.sabha.res$post_selection$rejs, support)
+    PWRs[[sprintf("FOCR-D%d-SABHA", w)]] <- pwr(focr.sabha.res$post_selection$rejs, support)
+    rejs[[sprintf("FOCR-D%d-SABHA", w)]] <- focr.sabha.res$post_selection$rejs
+  }
+  pretty_list(
+    FDPs = FDPs,
+    PWRs = PWRs,
+    FOCPs = FOCPs,
+    rejs = rejs,
+    generator = generator,
+    snr = snr,
+    block_sizes = block_sizes,
+    initial_filter = initial_filter,
+    .class = "focr_simulate_results_1d"
+  )
+}
+
 
 
 plot_clean <- function (xlim = c(0,1), ylim = c(0,1), x = 1, y = 1, type = "n",
@@ -271,7 +395,144 @@ plot_clean <- function (xlim = c(0,1), ylim = c(0,1), x = 1, y = 1, type = "n",
 }
 
 #' @export
-plot.focr_simulation_data <- function(x, snr = 1, which = 1,
+plot.focr_simulate_results_1d <- function(x, ...){
+  generator <- x$generator
+  res <- x
+  snr <- x$snr
+  mu_type <- generator$signal_type
+  cov_type <- generator$simulation_type
+  save_file <- FALSE
+
+  cex.text <- 0.5
+  xtext <- -75;
+  xfocr <- 1075; xfdr <- 1125; xpwr <- 1200
+  yline <- -0.2
+  sp_sm <- 0.02; sp_md <- 0.04; sp_lg <- 0.08
+  ymin <- -1.06 + (sp_lg + sp_sm * 6 + sp_md) * (3 - length(x$block_sizes))
+
+  title <- sprintf(
+    "bquote('Rejections under '~r~'=%.2f, '~.('%s')~mu[s]~', and %s'~%s~' '~(alpha~'=0.05'))",
+    snr,
+    ifelse(mu_type=='step', "Step", "Smooth"),
+    list("iid" = "iid ",
+         "AR" = "AR(1) ",
+         "matern" = "Matern correlation",
+         "Any"="arbitrary dependence")[[cov_type]],
+    ifelse(cov_type %in% c('iid', 'AR'), "epsilon[s]", "''")
+  )
+
+  plot.default(x = c(-100,1200), y = c(ymin,-0.2),#ylim = c(-1.06,-0.2),
+       main = eval(parse(text=title)),
+       xlab = "", ylab = "", type = 'n', axes = FALSE)
+  mtext("Location", 1, line = 1.6)
+
+  plot.focr_simulation_data_1d(generator, which = 2, snr = snr, alpha = NA, add = TRUE)
+
+  abseg(generator$support, yline, clear = TRUE, col = 'gray')
+  text(x = 65.5, y = yline, "1", cex = cex.text)
+  text(x = 173.5, y = yline, "2", cex = cex.text)
+  text(x = 231.5, y = yline, "3", cex = cex.text)
+  text(x = 446.5, y = yline, "4", cex = cex.text)
+  text(x = 733, y = yline, "5", cex = cex.text)
+  text(x = xtext, y = yline, "Underlying", cex = cex.text)
+  text(x = xfocr, y = yline, "FOCP", cex = cex.text)
+  text(x = xfdr, y = yline, "FDP", cex = cex.text)
+  text(x = xpwr, y = yline, "POWER", cex = cex.text)
+  yline <- yline-sp_lg
+
+
+  col <- 'dodgerblue3'
+  abseg(res$rejs$BH, yline, clear = TRUE, col = col);
+  text(x = xtext, y = yline, "BH", cex = cex.text, col = col)
+  text(x = xfdr, y = yline, sprintf("%.1f%%", res$FDPs[["BH"]] * 100), cex = cex.text, col = col)
+  text(x = xpwr, y = yline, sprintf("%.1f%%", res$PWRs[["BH"]] * 100), cex = cex.text, col = col)
+  yline <- yline-sp_sm
+
+  nm <- "SABHA"; col = 'brown'
+  abseg(res$rejs[[nm]], yline, clear = TRUE, col = col)
+  text(x = xtext, y = yline, nm, cex = cex.text, col = col)
+  text(x = xfdr, y = yline, sprintf("%.1f%%", res$FDPs[[nm]] * 100), cex = cex.text, col = col)
+  text(x = xpwr, y = yline, sprintf("%.1f%%", res$PWRs[[nm]] * 100), cex = cex.text, col = col)
+  yline <- yline-sp_sm
+
+
+  nm <- "LAWS"; col = 'purple3'
+  abseg(res$rejs[[nm]], yline, clear = TRUE, col = col)
+  text(x = xtext, y = yline, nm, cex = cex.text, col = col)
+  text(x = xfdr, y = yline, sprintf("%.1f%%", res$FDPs[[nm]] * 100), cex = cex.text, col = col)
+  text(x = xpwr, y = yline, sprintf("%.1f%%", res$PWRs[[nm]] * 100), cex = cex.text, col = col)
+  yline <- yline-sp_lg
+
+  for(w in x$block_sizes){
+    radius <- floor(w/2)
+
+    # --------------------------- FOCR overlap
+    nm <- sprintf("FOCR-O%d-RAW", w); col = 'orange'
+    abseg(res$rejs[[nm]], yline, clear = TRUE, col = col)
+    text(x = xtext, y = yline, nm, cex = cex.text, col = col)
+    text(x = xfocr, y = yline, sprintf("%.1f%%", res$FOCPs[[nm]] * 100), cex = cex.text, col = col)
+    text(x = xfdr, y = yline, sprintf("%.1f%%", res$FDPs[[nm]] * 100), cex = cex.text, col = col)
+    text(x = xpwr, y = yline, sprintf("%.1f%%", res$PWRs[[nm]] * 100), cex = cex.text, col = col)
+    yline <- yline-sp_sm
+
+    nm <- sprintf("FOCR-O%d-BH", w); col <- 'dodgerblue3'
+    abseg(res$rejs[[nm]], yline, clear = TRUE, col = col)
+    text(x = xtext, y = yline, nm, cex = cex.text, col = col)
+    text(x = xfdr, y = yline, sprintf("%.1f%%", res$FDPs[[nm]] * 100), cex = cex.text, col = col)
+    text(x = xpwr, y = yline, sprintf("%.1f%%", res$PWRs[[nm]] * 100), cex = cex.text, col = col)
+    yline <- yline-sp_sm
+
+    nm <- sprintf("FOCR-O%d-SABHA", w); col <- 'brown'
+    abseg(res$rejs[[nm]], yline, clear = TRUE, col = col)
+    text(x = xtext, y = yline, nm, cex = cex.text, col = col)
+    text(x = xfdr, y = yline, sprintf("%.1f%%", res$FDPs[[nm]] * 100), cex = cex.text, col = col)
+    text(x = xpwr, y = yline, sprintf("%.1f%%", res$PWRs[[nm]] * 100), cex = cex.text, col = col)
+    yline <- yline-sp_sm
+
+    nm <- sprintf("FOCR-O%d-LAWS", w); col <- 'purple3'
+    abseg(res$rejs[[nm]], yline, clear = TRUE, col = col)
+    text(x = xtext, y = yline, nm, cex = cex.text, col = col)
+    text(x = xfdr, y = yline, sprintf("%.1f%%", res$FDPs[[nm]] * 100), cex = cex.text, col = col)
+    text(x = xpwr, y = yline, sprintf("%.1f%%", res$PWRs[[nm]] * 100), cex = cex.text, col = col)
+    yline <- yline-sp_md
+
+    # --------------------------- FOCR disjoint
+    nm <- sprintf("FOCR-D%d-RAW", w); col = 'orange'
+    abseg(res$rejs[[nm]], yline, clear = TRUE, col = col)
+    text(x = xtext, y = yline, nm, cex = cex.text, col = col)
+    text(x = xfocr, y = yline, sprintf("%.1f%%", res$FOCPs[[nm]] * 100), cex = cex.text, col = col)
+    text(x = xfdr, y = yline, sprintf("%.1f%%", res$FDPs[[nm]] * 100), cex = cex.text, col = col)
+    text(x = xpwr, y = yline, sprintf("%.1f%%", res$PWRs[[nm]] * 100), cex = cex.text, col = col)
+    yline <- yline-sp_sm
+
+    nm <- sprintf("FOCR-D%d-BH", w); col <- 'dodgerblue3'
+    abseg(res$rejs[[nm]], yline, clear = TRUE, col = col)
+    text(x = xtext, y = yline, nm, cex = cex.text, col = col)
+    text(x = xfdr, y = yline, sprintf("%.1f%%", res$FDPs[[nm]] * 100), cex = cex.text, col = col)
+    text(x = xpwr, y = yline, sprintf("%.1f%%", res$PWRs[[nm]] * 100), cex = cex.text, col = col)
+    yline <- yline-sp_sm
+
+    nm <- sprintf("FOCR-D%d-SABHA", w); col <- 'brown'
+    abseg(res$rejs[[nm]], yline, clear = TRUE, col = col)
+    text(x = xtext, y = yline, nm, cex = cex.text, col = col)
+    text(x = xfdr, y = yline, sprintf("%.1f%%", res$FDPs[[nm]] * 100), cex = cex.text, col = col)
+    text(x = xpwr, y = yline, sprintf("%.1f%%", res$PWRs[[nm]] * 100), cex = cex.text, col = col)
+    yline <- yline-sp_sm
+
+    nm <- sprintf("FOCR-D%d-LAWS", w); col <- 'purple3'
+    abseg(res$rejs[[nm]], yline, clear = TRUE, col = col)
+    text(x = xtext, y = yline, nm, cex = cex.text, col = col)
+    text(x = xfdr, y = yline, sprintf("%.1f%%", res$FDPs[[nm]] * 100), cex = cex.text, col = col)
+    text(x = xpwr, y = yline, sprintf("%.1f%%", res$PWRs[[nm]] * 100), cex = cex.text, col = col)
+    yline <- yline-sp_lg
+  }
+
+
+
+}
+
+#' @export
+plot.focr_simulation_data_1d <- function(x, snr = 1, which = 1,
                                       alpha = 0.05, ymin = -0.3, ymax = "auto",
                                       ylab = "", main = "", samples = TRUE,
                                       data, add = FALSE, ...){

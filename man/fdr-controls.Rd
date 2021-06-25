@@ -48,7 +48,7 @@ A list of rejection results:
 \item{\code{rejs}}{integer indices of rejected hypotheses;}
 \item{\code{nrejs}}{total number of rejections;}
 \item{\code{method}}{characters of method name;}
-\item{\code{filter,initial_filter}}{passed from arguments;}
+\item{\code{filter,initial_filter}}{passed from arguments, used to calculate "purity" values;}
 \item{\code{pis_hat}}{estimated sparsity level (\code{LAWS} and
 \code{SABHA} only);}
 \item{\code{tau}}{p-value cutoff value (\code{BH} and

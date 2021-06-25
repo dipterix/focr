@@ -2,25 +2,35 @@
 % Please edit documentation in R/simulation.R
 \name{simulation}
 \alias{simulation}
-\alias{simulation_data}
-\alias{simulation_data_2d}
+\alias{simulation_data_1D}
+\alias{simulation_data_2D}
+\alias{simulate_1D}
 \title{Generate simulation data used in the paper and vignettes}
 \usage{
-simulation_data(
+simulation_data_1D(
   n_points,
   n_obs = 100,
-  mu_type = c("sine", "step", "custom"),
+  mu_type = c("step", "sine", "custom"),
   cov_type = c("AR", "exponential", "matern", "any", "iid"),
   custom = NULL,
   corrupt = FALSE,
   ...
 )
 
-simulation_data_2d(
+simulation_data_2D(
   cov_type = c("iid", "AR", "exponential", "matern", "any"),
   n_obs = 100,
   corrupt = FALSE,
   ...
+)
+
+simulate_1D(
+  generator,
+  snr = 0.2,
+  block_sizes = 21,
+  initial_filter = 0.9,
+  alpha = 0.05,
+  bandwidth = 90
 )
 }
 \arguments{
@@ -41,10 +51,22 @@ simulation_data_2d(
 addition model}
 
 \item{...}{passed to internal function; see 'Details'}
+
+\item{generator}{list items returned by \code{simulation_data_1D}}
+
+\item{snr}{positive number to control the signal-to-noise ratio}
+
+\item{block_sizes}{integer vectors to control the block size;
+see \code{\link{focr}}}
+
+\item{initial_filter}{used by \code{LAWS} and \code{SABHA}; see
+\code{\link{focr}}, \code{\link{fdr-controls}}}
+
+\item{alpha}{'FOCR' and 'FDR' level; default is \code{0.05}}
 }
 \description{
-\code{simulation_data} generates one-dimensional data,
-\code{simulation_data_2d} generates two-dimensional image data.
+\code{simulation_data_1D} generates one-dimensional data,
+\code{simulation_data_2D} generates two-dimensional image data.
 }
 \details{
 When \code{mu_type} is 'custom', parameter \code{custom} needs to be a
@@ -69,7 +91,7 @@ of corrupted points follows a binomial distribution.
 
 
 # -------------------- Basic usage ------------------------
-generator <- simulation_data(200, cov_type = 'matern')
+generator <- simulation_data_1D(200, cov_type = 'matern')
 
 # generate date with signal-to-noise ratio = 0.4
 data <- generator$gen_data(snr = 0.4)
@@ -81,19 +103,28 @@ image(cor(data), main = 'Matern correlation')
 
 # -------------------- Change Matern parameters ------------------------
 # Control kappa/phi here
-generator <- simulation_data(200, cov_type = 'matern', kappa = 10)
+generator <- simulation_data_1D(200, cov_type = 'matern', kappa = 10)
 data <- generator$gen_data(snr = 0.4)
 
 image(cor(data), main = 'Smooth Matern correlation with kappa=10')
 
 # -------------------- 2D data ------------------------
 # generate a 2D triangle data
-generator <- simulation_data_2d(cov_type = 'AR')
+generator <- simulation_data_2D(cov_type = 'AR')
 data <- generator$gen_data(snr = 0.6)
 
 par(mfrow = c(1,2))
 image(matrix(colMeans(data), 32), main = '2D sample mean')
 image(matrix(generator$mu, 32), main = '2D underlying mean')
+
+# -------------------- Simulation used by paper ----------
+# might take a while to run
+if(interactive()){
+  generator <- simulation_data_1D(n_points = 1000, cov_type = 'AR')
+  set.seed(1000)
+  sim <- simulate_1D(generator, snr = 0.3)
+  plot(sim)
+}
 
 
 }

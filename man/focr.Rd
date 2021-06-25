@@ -147,7 +147,7 @@ by locations of hypotheses. See 'vignette'
 
 library(focr)
 set.seed(100)
-generator <- simulation_data(n_points = 1000, mu_type = 'step',
+generator <- simulation_data_1D(n_points = 1000, mu_type = 'step',
                              cov_type = 'AR')
 data <- generator$gen_data(snr = 0.34)
 plot(generator, data = data, snr = 0.34)

@@ -1,5 +1,5 @@
 ---
-title: "False Overlapped-Cluster Rate"
+title: "False Overlapped-Cluster Rate (FOCR) Framework for Multiple Testing Problems with Topological Constraints"
 output: rmarkdown::html_vignette
 author: Zhengjia Wang
 vignette: >
@@ -15,22 +15,30 @@ knitr::opts_chunk$set(
 )
 ```
 
-A false overlapped-cluster rate (FOCR) is a type-I error measure for multiple testing problems with topological constraints. This package `focr` provides a two-stage multiple testing control procedure:
+In continuum data, we often want to find the support of the functions. This problem can be solved by simultaneously testing $H_{0}(s): f(s)=0$ and find $s$ such that null hypotheses are rejected. In many conventional multiple testing procedures, each $s$ is treated separately. However, in functional settings, $f(s)$ is affected by $s'$ nearby. It is more reasonable to take $H_{0}(s'), \forall s'$ near $s$ into account.
 
-* In the first stage, clusters of hypotheses are rejected as regions of interests (`ROI`), with **FOCR** controlled at desired level;
-* In the second stage, conditional p-values are calculated in a post-selection inference fashion. **FDR** control procedures are applied to these p-values to further select individual hypotheses.
+The `FOCR` framework provides a flexible framework allowing aggregating blocks/clusters of $s$. The clusters of different $s$ can be overlapped. Our first goal is to find connected regions that contain significant points. Then we perform post-selection inferences on the blocks and further select hypotheses that controls the FDR. This two-stage framework tends to be more powerful than applying FDR control methods directly to marginal unconditioned p-values. It also prevents inflated FDR for methods such as `LAWS`<a name=cite-cai2021laws></a>[[3](#bib-cai2021laws)] and `SABHA`<a name=cite-li2019multiple></a>[[4](#bib-li2019multiple)] under dependence.
 
-## A functional example
 
-We generate a functional data as follows. In the figure, the red solid line is the underlying step function. The blue line is the data sample mean, and ribbon around is the `95%` point-wise confidence interval.
+This package `focr` provides a two-stage multiple testing control procedure:
+
+* In the first stage, clusters of hypotheses are rejected as regions of interests (`ROI`), with **FOCR** controlled at desired level; (see function `focr_initial` for documentation)
+* In the second stage, conditional p-values are calculated in a post-selection inference fashion. **FDR** control procedures are applied to these p-values to further select individual hypotheses. (See function `focr` for documentation)
+
+In the rest of this vignette, we refer to `FOCR framework` or `FOCR-XXX` as this two-stage procedure where `XXX` is the name of post-selection procedure, and `FOCR` or `FOCR error` as the type-I error measure for overlapped blocks. 
+
+## A basic example
+
+We generate a functional data as follows. In the figure, the red solid line is the underlying step function. The blue line is the data sample mean, and ribbon around is the `95%` point-wise confidence interval. Our goal is to find the support of the function.
 
 ```{r setup, fig.width=6}
 library(focr)
 set.seed(400)
-generator <- simulation_data(n_points = 1000, mu_type = 'step')
+generator <- simulation_data_1D(n_points = 1000, mu_type = 'step')
 data <- generator$gen_data(snr = 0.5)
 plot(generator, data = data, snr = 0.5)
 ```
+
 
 We apply the `FOCR-BH` approach to control the FDR at level 0.05. `FOCR-BH` uses the `Benjamini-Hochberg` (`BH`) procedure as the FDR control method in stage-II.
 
@@ -58,12 +66,12 @@ pwr(res$post_selection$rejs, generator$support)
 
 ## 2D, 3D spatial data
 
-Let's generate a 2D sample data ($30\times 30$). The red colored pixels are non-zeros, and white pixels are true null pixels.
+Let's generate a 2D sample data ($32\times 32$). The red colored pixels are non-zeros, and white pixels are true null pixels. Our goal is to extract non-zero pixels (red).
 
 ```{r 2D-setup}
 library(focr)
 set.seed(400)
-generator <- simulation_data_2d(cov_type = 'iid')
+generator <- simulation_data_2D(cov_type = 'AR')
 data <- generator$gen_data(snr = 0.4)
 mu <- generator$mu
 pal <- colorRampPalette(c('white', 'red'))(64)
@@ -71,24 +79,23 @@ pal2 <- colorRampPalette(c('red', 'white', 'white'))(64)
 image(mu, zlim = c(0,1), col = pal)
 ```
 
-Next, we perform the `FOCR-BH` procedure in one line.
+For each pixel $s$, we test on $H_{0}(s): f(s)=0$ versus $H_{1}(s): f(s)\neq 0$. 
+Next, we perform the `FOCR-LAWS` procedure in one line.
 
 ```{r}
 # Run FOCR-BH
 dim(data)
 res <- focr(data = data, block_size = 3, 
-            alpha = 0.05, fdr_method = 'BH', 
-            initial_filter = 0.9,
+            alpha = 0.05, fdr_method = 'LAWS', 
             dimension = dim(mu))
 ```
 
-Notice `data` is flattened as a matrix of dimension `100 \times 1024` (100 observations and 32x32 columns)
+Notice `data` is flattened as a matrix of dimension $100 \times 1024$ (100 observations and $32\times 32$ columns)
 
-The following figure shows the underlying image, `FOCR` conditional p-values and `FOCR-BH` final rejections side-by-side. As a comparison, we also show the results of the classical `BH` procedure on unconditional p-values. The `FOCR-BH` approach tends to select less isolated pixels outside of the cluster. It is also more powerful than the `BH` procedure.
+The following figure shows the `FOCR` conditional p-values and `FOCR-LAWS` final rejections side-by-side. As comparisons, we also show the results of `LAWS`<a name=cite-cai2021laws></a>[[3](#bib-cai2021laws)] and `BH`<a name=cite-benjamini1995controlling></a>[[1](#bib-benjamini1995controlling)] procedure on unconditional p-values. Under dependence, the `FOCR-LAWS` avoids inflated FDR compared to original LAWS method. Our approach also tends to select less isolated pixels outside of the cluster. It is also more powerful than the `BH` procedure.
 
-```{r FOCR-BH-2D, fig.width=6, fig.height=6}
+```{r FOCR-LAWS-2D, fig.width=7, fig.height=6}
 par(mfrow = c(2, 2))
-image(mu, zlim = c(0,1), col = pal, main = 'Underlying mean')
 
 # Plot conditional p-values
 cond_pvals <- res$cond_pvals
@@ -101,20 +108,37 @@ img <- matrix(NA, 32, 32)
 focr_bh <- res$post_selection$rejs
 img[focr_bh] <- 1
 image(img, zlim = c(0,1), col = pal, 
-      main = 'FOCR-BH final rejection (proposed)', 
+      main = 'FOCR-LAWS final rejections (proposed)', 
       sub = sprintf("FDP: %.1f%%, Power: %.1f%%",
                     fdp(focr_bh, generator$support)*100,
                     pwr(focr_bh, generator$support)*100))
 
-# Compare with BH
+# Compare with LAWS
 pvals <- res$uncond_pvals
 dim(pvals) <- dim(mu)
-rej <- focr:::BH(pvals, alpha = 0.05)
+# Under dependence, LAWS must use large bandwidth
+# and small purity value (initial filter) to avoid 
+# inflated FDR, therefore we cannot use small ones 
+# as FOCR-LAWS
+rej <- LAWS(pvals, alpha = 0.05, bandwidth = 50, initial_filter = 0.5)
 bh <- rej$rejs
 img <- matrix(NA, 32, 32)
 img[bh] <- 1
 image(img, zlim = c(0,1), col = pal, 
-      main = 'BH rejection as comparison',
+      main = 'LAWS rejections as comparison',
+      sub = sprintf("FDP: %.1f%%, Power: %.1f%%",
+                    fdp(bh, generator$support)*100,
+                    pwr(bh, generator$support)*100))
+
+# Compare with BH
+pvals <- res$uncond_pvals
+dim(pvals) <- dim(mu)
+rej <- BH(pvals, alpha = 0.05)
+bh <- rej$rejs
+img <- matrix(NA, 32, 32)
+img[bh] <- 1
+image(img, zlim = c(0,1), col = pal, 
+      main = 'BH rejections as comparison',
       sub = sprintf("FDP: %.1f%%, Power: %.1f%%",
                     fdp(bh, generator$support)*100,
                     pwr(bh, generator$support)*100))
@@ -183,7 +207,7 @@ The `data_corr` allows prespecified correlation matrix. `blocks` can be a list o
 ```{r}
 library(focr)
 set.seed(10)
-generator <- simulation_data(n_points = 1000, mu_type = 'step', cov_type = 'iid')
+generator <- simulation_data_1D(n_points = 1000, mu_type = 'step', cov_type = 'iid')
 data <- generator$gen_data(snr = 0.5)
 dim(data)
 

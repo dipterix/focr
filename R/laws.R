@@ -46,10 +46,11 @@ get_bandwidth <- function(l, d){
 
 laws_pval <- function(pv, bandwidth, dimension = c("one", "two", "three"), alpha = 0.05, initial_filter = 0.9){
   if(is.na(bandwidth)){
-    get_bandwidth(length(pv), dim(pv))
+    bandwidth <- get_bandwidth(length(pv), dim(pv))
   }
   dimension <- match.arg(dimension)
-  bh.th<-BH(pv, initial_filter)$tau
+  # Do not remove 1s
+  bh.th<-BH(pv, initial_filter, filter = 2)$tau
   # if(bandwidth < 1){
   #   bandwidth <- bandwidth * length(pv)
   # }
@@ -77,7 +78,7 @@ laws_pval <- function(pv, bandwidth, dimension = c("one", "two", "three"), alpha
 
 sabha_pval <- function(pv, bandwidth, dimension = c("one", "two", "three"), alpha = 0.05, initial_filter = 0.9){
   if(is.na(bandwidth)){
-    get_bandwidth(length(pv), dim(pv))
+    bandwidth <- get_bandwidth(length(pv), dim(pv))
   }
   dimension <- match.arg(dimension)
   bh.th<-BH(pv, initial_filter)$tau

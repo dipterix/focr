@@ -24,7 +24,7 @@ bh_pvals <- function (pvals, alpha = 0.05, filter = 1) {
   } else {
     rejs <- which(sel)
   }
-  tau <- alpha1 * nrejs / m
+  tau <- alpha * nrejs / m
   return(list(
     nrejs = nrejs, rejs = rejs, order = (m + 1L)-ro,
     qvals = qvals, tau = tau, filter = filter
