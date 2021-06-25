@@ -40,8 +40,8 @@
 
 
 <meta property="og:title" content="Generate simulation data used in the paper and vignettes — simulation" />
-<meta property="og:description" content="simulation_data generates one-dimensional data,
-simulation_data_2d generates two-dimensional image data." />
+<meta property="og:description" content="simulation_data_1D generates one-dimensional data,
+simulation_data_2D generates two-dimensional image data." />
 
 
 
@@ -96,7 +96,7 @@ simulation_data_2d generates two-dimensional image data." />
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
-      <a href="../articles/false-overlapped-cluster-rate.html">False Overlapped-Cluster Rate</a>
+      <a href="../articles/false-overlapped-cluster-rate.html">False Overlapped-Cluster Rate (FOCR) Framework for Multiple Testing Problems with Topological Constraints</a>
     </li>
   </ul>
 </li>
@@ -127,25 +127,34 @@ simulation_data_2d generates two-dimensional image data." />
     </div>
 
     <div class="ref-description">
-    <p><code>simulation_data</code> generates one-dimensional data,
-<code>simulation_data_2d</code> generates two-dimensional image data.</p>
+    <p><code>simulation_data_1D</code> generates one-dimensional data,
+<code>simulation_data_2D</code> generates two-dimensional image data.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>simulation_data</span><span class='op'>(</span>
+    <pre class="usage"><span class='fu'>simulation_data_1D</span><span class='op'>(</span>
   <span class='va'>n_points</span>,
   n_obs <span class='op'>=</span> <span class='fl'>100</span>,
-  mu_type <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"sine"</span>, <span class='st'>"step"</span>, <span class='st'>"custom"</span><span class='op'>)</span>,
+  mu_type <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"step"</span>, <span class='st'>"sine"</span>, <span class='st'>"custom"</span><span class='op'>)</span>,
   cov_type <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"AR"</span>, <span class='st'>"exponential"</span>, <span class='st'>"matern"</span>, <span class='st'>"any"</span>, <span class='st'>"iid"</span><span class='op'>)</span>,
   custom <span class='op'>=</span> <span class='cn'>NULL</span>,
   corrupt <span class='op'>=</span> <span class='cn'>FALSE</span>,
   <span class='va'>...</span>
 <span class='op'>)</span>
 
-<span class='fu'>simulation_data_2d</span><span class='op'>(</span>
+<span class='fu'>simulation_data_2D</span><span class='op'>(</span>
   cov_type <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"iid"</span>, <span class='st'>"AR"</span>, <span class='st'>"exponential"</span>, <span class='st'>"matern"</span>, <span class='st'>"any"</span><span class='op'>)</span>,
   n_obs <span class='op'>=</span> <span class='fl'>100</span>,
   corrupt <span class='op'>=</span> <span class='cn'>FALSE</span>,
   <span class='va'>...</span>
+<span class='op'>)</span>
+
+<span class='fu'>simulate_1D</span><span class='op'>(</span>
+  <span class='va'>generator</span>,
+  snr <span class='op'>=</span> <span class='fl'>0.2</span>,
+  block_sizes <span class='op'>=</span> <span class='fl'>21</span>,
+  initial_filter <span class='op'>=</span> <span class='fl'>0.9</span>,
+  alpha <span class='op'>=</span> <span class='fl'>0.05</span>,
+  bandwidth <span class='op'>=</span> <span class='fl'>90</span>
 <span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -183,6 +192,28 @@ addition model</p></td>
       <th>...</th>
       <td><p>passed to internal function; see 'Details'</p></td>
     </tr>
+    <tr>
+      <th>generator</th>
+      <td><p>list items returned by <code>simulation_data_1D</code></p></td>
+    </tr>
+    <tr>
+      <th>snr</th>
+      <td><p>positive number to control the signal-to-noise ratio</p></td>
+    </tr>
+    <tr>
+      <th>block_sizes</th>
+      <td><p>integer vectors to control the block size;
+see <code><a href='focr.html'>focr</a></code></p></td>
+    </tr>
+    <tr>
+      <th>initial_filter</th>
+      <td><p>used by <code>LAWS</code> and <code>SABHA</code>; see
+<code><a href='focr.html'>focr</a></code>, <code><a href='fdr-controls.html'>fdr-controls</a></code></p></td>
+    </tr>
+    <tr>
+      <th>alpha</th>
+      <td><p>'FOCR' and 'FDR' level; default is <code>0.05</code></p></td>
+    </tr>
     </table>
 
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
@@ -207,7 +238,7 @@ of corrupted points follows a binomial distribution.</p>
     <pre class="examples"><div class='input'>
 
 <span class='co'># -------------------- Basic usage ------------------------</span>
-<span class='va'>generator</span> <span class='op'>&lt;-</span> <span class='fu'>simulation_data</span><span class='op'>(</span><span class='fl'>200</span>, cov_type <span class='op'>=</span> <span class='st'>'matern'</span><span class='op'>)</span>
+<span class='va'>generator</span> <span class='op'>&lt;-</span> <span class='fu'>simulation_data_1D</span><span class='op'>(</span><span class='fl'>200</span>, cov_type <span class='op'>=</span> <span class='st'>'matern'</span><span class='op'>)</span>
 </div><div class='output co'>#&gt; <span class='message'>matern with phi=0.0100 &amp; kappa=2.5000</span></div><div class='input'>
 <span class='co'># generate date with signal-to-noise ratio = 0.4</span>
 <span class='va'>data</span> <span class='op'>&lt;-</span> <span class='va'>generator</span><span class='op'>$</span><span class='fu'>gen_data</span><span class='op'>(</span>snr <span class='op'>=</span> <span class='fl'>0.4</span><span class='op'>)</span>
@@ -219,20 +250,29 @@ of corrupted points follows a binomial distribution.</p>
 </div><div class='img'><img src='simulation-1.png' alt='' width='700' height='433' /></div><div class='input'>
 <span class='co'># -------------------- Change Matern parameters ------------------------</span>
 <span class='co'># Control kappa/phi here</span>
-<span class='va'>generator</span> <span class='op'>&lt;-</span> <span class='fu'>simulation_data</span><span class='op'>(</span><span class='fl'>200</span>, cov_type <span class='op'>=</span> <span class='st'>'matern'</span>, kappa <span class='op'>=</span> <span class='fl'>10</span><span class='op'>)</span>
+<span class='va'>generator</span> <span class='op'>&lt;-</span> <span class='fu'>simulation_data_1D</span><span class='op'>(</span><span class='fl'>200</span>, cov_type <span class='op'>=</span> <span class='st'>'matern'</span>, kappa <span class='op'>=</span> <span class='fl'>10</span><span class='op'>)</span>
 </div><div class='output co'>#&gt; <span class='message'>matern with phi=0.0100 &amp; kappa=10.0000</span></div><div class='input'><span class='va'>data</span> <span class='op'>&lt;-</span> <span class='va'>generator</span><span class='op'>$</span><span class='fu'>gen_data</span><span class='op'>(</span>snr <span class='op'>=</span> <span class='fl'>0.4</span><span class='op'>)</span>
 
 <span class='fu'><a href='https://rdrr.io/r/graphics/image.html'>image</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/stats/cor.html'>cor</a></span><span class='op'>(</span><span class='va'>data</span><span class='op'>)</span>, main <span class='op'>=</span> <span class='st'>'Smooth Matern correlation with kappa=10'</span><span class='op'>)</span>
 </div><div class='img'><img src='simulation-2.png' alt='' width='700' height='433' /></div><div class='input'>
 <span class='co'># -------------------- 2D data ------------------------</span>
 <span class='co'># generate a 2D triangle data</span>
-<span class='va'>generator</span> <span class='op'>&lt;-</span> <span class='fu'>simulation_data_2d</span><span class='op'>(</span>cov_type <span class='op'>=</span> <span class='st'>'AR'</span><span class='op'>)</span>
+<span class='va'>generator</span> <span class='op'>&lt;-</span> <span class='fu'>simulation_data_2D</span><span class='op'>(</span>cov_type <span class='op'>=</span> <span class='st'>'AR'</span><span class='op'>)</span>
 </div><div class='output co'>#&gt; <span class='message'>AR(1) with rho=0.95</span></div><div class='input'><span class='va'>data</span> <span class='op'>&lt;-</span> <span class='va'>generator</span><span class='op'>$</span><span class='fu'>gen_data</span><span class='op'>(</span>snr <span class='op'>=</span> <span class='fl'>0.6</span><span class='op'>)</span>
 
 <span class='fu'><a href='https://rdrr.io/r/graphics/par.html'>par</a></span><span class='op'>(</span>mfrow <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>1</span>,<span class='fl'>2</span><span class='op'>)</span><span class='op'>)</span>
 <span class='fu'><a href='https://rdrr.io/r/graphics/image.html'>image</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/matrix.html'>matrix</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/colSums.html'>colMeans</a></span><span class='op'>(</span><span class='va'>data</span><span class='op'>)</span>, <span class='fl'>32</span><span class='op'>)</span>, main <span class='op'>=</span> <span class='st'>'2D sample mean'</span><span class='op'>)</span>
 <span class='fu'><a href='https://rdrr.io/r/graphics/image.html'>image</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/matrix.html'>matrix</a></span><span class='op'>(</span><span class='va'>generator</span><span class='op'>$</span><span class='va'>mu</span>, <span class='fl'>32</span><span class='op'>)</span>, main <span class='op'>=</span> <span class='st'>'2D underlying mean'</span><span class='op'>)</span>
 </div><div class='img'><img src='simulation-3.png' alt='' width='700' height='433' /></div><div class='input'>
+<span class='co'># -------------------- Simulation used by paper ----------</span>
+<span class='co'># might take a while to run</span>
+<span class='kw'>if</span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/interactive.html'>interactive</a></span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span><span class='op'>{</span>
+  <span class='va'>generator</span> <span class='op'>&lt;-</span> <span class='fu'>simulation_data_1D</span><span class='op'>(</span>n_points <span class='op'>=</span> <span class='fl'>1000</span>, cov_type <span class='op'>=</span> <span class='st'>'AR'</span><span class='op'>)</span>
+  <span class='fu'><a href='https://rdrr.io/r/base/Random.html'>set.seed</a></span><span class='op'>(</span><span class='fl'>1000</span><span class='op'>)</span>
+  <span class='va'>sim</span> <span class='op'>&lt;-</span> <span class='fu'>simulate_1D</span><span class='op'>(</span><span class='va'>generator</span>, snr <span class='op'>=</span> <span class='fl'>0.3</span><span class='op'>)</span>
+  <span class='fu'><a href='https://rdrr.io/r/graphics/plot.default.html'>plot</a></span><span class='op'>(</span><span class='va'>sim</span><span class='op'>)</span>
+<span class='op'>}</span>
+
 
 </div></pre>
   </div>

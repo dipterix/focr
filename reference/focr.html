@@ -95,7 +95,7 @@
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
-      <a href="../articles/false-overlapped-cluster-rate.html">False Overlapped-Cluster Rate</a>
+      <a href="../articles/false-overlapped-cluster-rate.html">False Overlapped-Cluster Rate (FOCR) Framework for Multiple Testing Problems with Topological Constraints</a>
     </li>
   </ul>
 </li>
@@ -299,7 +299,7 @@ by locations of hypotheses. See 'vignette'
 
 <span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='va'><a href='http://dipterix.github.io/focr'>focr</a></span><span class='op'>)</span>
 <span class='fu'><a href='https://rdrr.io/r/base/Random.html'>set.seed</a></span><span class='op'>(</span><span class='fl'>100</span><span class='op'>)</span>
-<span class='va'>generator</span> <span class='op'>&lt;-</span> <span class='fu'><a href='simulation.html'>simulation_data</a></span><span class='op'>(</span>n_points <span class='op'>=</span> <span class='fl'>1000</span>, mu_type <span class='op'>=</span> <span class='st'>'step'</span>,
+<span class='va'>generator</span> <span class='op'>&lt;-</span> <span class='fu'><a href='simulation.html'>simulation_data_1D</a></span><span class='op'>(</span>n_points <span class='op'>=</span> <span class='fl'>1000</span>, mu_type <span class='op'>=</span> <span class='st'>'step'</span>,
                              cov_type <span class='op'>=</span> <span class='st'>'AR'</span><span class='op'>)</span>
 </div><div class='output co'>#&gt; <span class='message'>AR(1) with rho=0.95</span></div><div class='input'><span class='va'>data</span> <span class='op'>&lt;-</span> <span class='va'>generator</span><span class='op'>$</span><span class='fu'>gen_data</span><span class='op'>(</span>snr <span class='op'>=</span> <span class='fl'>0.34</span><span class='op'>)</span>
 <span class='fu'><a href='https://rdrr.io/r/graphics/plot.default.html'>plot</a></span><span class='op'>(</span><span class='va'>generator</span>, data <span class='op'>=</span> <span class='va'>data</span>, snr <span class='op'>=</span> <span class='fl'>0.34</span><span class='op'>)</span>
@@ -335,9 +335,9 @@ by locations of hypotheses. See 'vignette'
             initial_filter <span class='op'>=</span> <span class='fl'>0.5</span><span class='op'>)</span>
 <span class='va'>fdp</span> <span class='op'>&lt;-</span> <span class='fu'><a href='fdp-pwr.html'>fdp</a></span><span class='op'>(</span><span class='va'>res</span><span class='op'>$</span><span class='va'>post_selection</span><span class='op'>$</span><span class='va'>rejs</span>, <span class='va'>generator</span><span class='op'>$</span><span class='va'>support</span><span class='op'>)</span>
 <span class='va'>fdp</span>
-</div><div class='output co'>#&gt; [1] 0.001795332</div><div class='input'><span class='va'>power</span> <span class='op'>&lt;-</span> <span class='fu'><a href='fdp-pwr.html'>pwr</a></span><span class='op'>(</span><span class='va'>res</span><span class='op'>$</span><span class='va'>post_selection</span><span class='op'>$</span><span class='va'>rejs</span>, <span class='va'>generator</span><span class='op'>$</span><span class='va'>support</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; [1] 0.001798561</div><div class='input'><span class='va'>power</span> <span class='op'>&lt;-</span> <span class='fu'><a href='fdp-pwr.html'>pwr</a></span><span class='op'>(</span><span class='va'>res</span><span class='op'>$</span><span class='va'>post_selection</span><span class='op'>$</span><span class='va'>rejs</span>, <span class='va'>generator</span><span class='op'>$</span><span class='va'>support</span><span class='op'>)</span>
 <span class='va'>power</span>
-</div><div class='output co'>#&gt; [1] 0.9771529</div><div class='input'>
+</div><div class='output co'>#&gt; [1] 0.9753954</div><div class='input'>
 <span class='co'># Visualize</span>
 <span class='fu'><a href='https://rdrr.io/r/graphics/plot.default.html'>plot</a></span><span class='op'>(</span><span class='va'>generator</span><span class='op'>$</span><span class='va'>mu</span>, type <span class='op'>=</span> <span class='st'>'l'</span>, col <span class='op'>=</span> <span class='st'>'red'</span>, ylim <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='op'>-</span><span class='fl'>.5</span>,<span class='fl'>1.5</span><span class='op'>)</span>,
      main <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/sprintf.html'>sprintf</a></span><span class='op'>(</span><span class='st'>'FOCR-LAWS, FDP=%.1f%%, Power=%.1f%%'</span>,
@@ -364,9 +364,9 @@ by locations of hypotheses. See 'vignette'
 <span class='co'># structure is disjoint</span>
 <span class='va'>fdp</span> <span class='op'>&lt;-</span> <span class='fu'><a href='fdp-pwr.html'>fdp</a></span><span class='op'>(</span><span class='va'>res</span><span class='op'>$</span><span class='va'>post_selection</span><span class='op'>$</span><span class='va'>rejs</span>, <span class='va'>generator</span><span class='op'>$</span><span class='va'>support</span><span class='op'>)</span>
 <span class='va'>fdp</span>
-</div><div class='output co'>#&gt; [1] 0.001934236</div><div class='input'><span class='va'>power</span> <span class='op'>&lt;-</span> <span class='fu'><a href='fdp-pwr.html'>pwr</a></span><span class='op'>(</span><span class='va'>res</span><span class='op'>$</span><span class='va'>post_selection</span><span class='op'>$</span><span class='va'>rejs</span>, <span class='va'>generator</span><span class='op'>$</span><span class='va'>support</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; [1] 0.001876173</div><div class='input'><span class='va'>power</span> <span class='op'>&lt;-</span> <span class='fu'><a href='fdp-pwr.html'>pwr</a></span><span class='op'>(</span><span class='va'>res</span><span class='op'>$</span><span class='va'>post_selection</span><span class='op'>$</span><span class='va'>rejs</span>, <span class='va'>generator</span><span class='op'>$</span><span class='va'>support</span><span class='op'>)</span>
 <span class='va'>power</span>
-</div><div class='output co'>#&gt; [1] 0.9068541</div><div class='input'>
+</div><div class='output co'>#&gt; [1] 0.9349736</div><div class='input'>
 
 </div></pre>
   </div>
