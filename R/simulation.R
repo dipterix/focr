@@ -99,7 +99,7 @@ gen_error <- function(n_points, type = c("AR", "exponential", "matern", "any", "
 #' @param snr positive number to control the signal-to-noise ratio
 #' @param block_sizes integer vectors to control the block size;
 #' see \code{\link{focr}}
-#' @param initial_filter used by \code{LAWS} and \code{SABHA}; see
+#' @param initial_filter,bandwidth used by \code{LAWS} and \code{SABHA}; see
 #' \code{\link{focr}}, \code{\link{fdr-controls}}
 #' @param alpha 'FOCR' and 'FDR' level; default is \code{0.05}
 #' @param ... passed to internal function; see 'Details'

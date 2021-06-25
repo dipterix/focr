@@ -59,7 +59,7 @@ addition model}
 \item{block_sizes}{integer vectors to control the block size;
 see \code{\link{focr}}}
 
-\item{initial_filter}{used by \code{LAWS} and \code{SABHA}; see
+\item{initial_filter, bandwidth}{used by \code{LAWS} and \code{SABHA}; see
 \code{\link{focr}}, \code{\link{fdr-controls}}}
 
 \item{alpha}{'FOCR' and 'FDR' level; default is \code{0.05}}
