@@ -237,11 +237,14 @@ focr_initial <- function(data, data_corr, blocks, nblocks = ncol(data),
   }
   # slice_cor
   stats <- t(sapply(seq_len(nblocks), function(ii){
+    if(ii %% 1000 == 0){
+      debug(sprintf("Block %d \r", ii), appendLF = FALSE)
+    }
     idx <- block_idx(ii)
     m <- slice_mean(idx)
     v <- slice_cor(idx, idx)
     tval <- n * sum(m^2)
-    param <- gamma_approx(v)
+    param <- gamma_approx2(v)
     shape <- param$M / param$u
     scale <- param$u
     # pval <- pgamma(tval, shape = shape, scale = scale, lower.tail = FALSE)

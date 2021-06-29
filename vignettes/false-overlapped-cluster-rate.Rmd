@@ -85,9 +85,10 @@ Next, we perform the `FOCR-LAWS` procedure in one line.
 ```{r}
 # Run FOCR-BH
 dim(data)
-res <- focr(data = data, block_size = 3, 
+res <- focr(data = data, block_size = 11, 
             alpha = 0.05, fdr_method = 'LAWS', 
-            dimension = dim(mu))
+            dimension = dim(mu), 
+            verbose = TRUE)
 ```
 
 Notice `data` is flattened as a matrix of dimension $100 \times 1024$ (100 observations and $32\times 32$ columns)

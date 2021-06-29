@@ -241,11 +241,25 @@ simulation_data_2D <- function(
   # mu <- png::readPNG('inst/triangle.png')
   # write.table(1-mu[,,3], file = 'inst/triangle.txt', sep = '\t',
   #             row.names = FALSE, col.names = FALSE)
-  mu <- read.table(system.file('triangle.txt', package = 'focr'), sep = '\t', header = FALSE)
+  # mu <- read.table(system.file('triangle.txt', package = 'focr'), sep = '\t', header = FALSE)
+  mu <- 1 - t(png::readPNG(system.file('cards.png', package = 'focr'))[,,1])
   mu <- as.matrix(mu)
+  mu[mu < 0.1] <- 0
+  mu[mu > 0.1 & mu < 0.6] <- 0.5
   dim <- dim(mu)
   n_points <- prod(dim)
-  dat <- gen_error(n_points, type = cov_type, ...)
+  # dat <- gen_error(n_points, type = cov_type, ...)
+  dat <- list(
+    n_points = n_points,
+    type = cov_type,
+    sd = 1,
+    gen_data = function(n_obs, mu){
+      d <- neuRosim::spatialnoise(dim, 1, n_obs, rho = 0.95, method="corr")
+      aperm(d, c(3,1,2))
+      dim(d) <- c(n_obs, n_points)
+      d
+    }
+  )
   # generate data using cov of power
 
   sig <- which(mu != 0)

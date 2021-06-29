@@ -15,6 +15,17 @@ gamma_approx <- function(cov){
   )
 }
 
+# simplified as data sd = 1
+gamma_approx2 <- function(cov){
+  M <- nrow(cov)
+  # diag(cov) <- 0
+  u <- (sum(cov^2) / M) * 2
+  list(
+    M = M,
+    u = u
+  )
+}
+
 #' @name fdp-pwr
 #' @title Calculates false-discovery proportions and statistical power
 #' @param rej integer indices of rejected hypotheses
