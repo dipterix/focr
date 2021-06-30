@@ -17,12 +17,7 @@ simulation_data_1D(
   ...
 )
 
-simulation_data_2D(
-  cov_type = c("iid", "AR", "exponential", "matern", "any"),
-  n_obs = 100,
-  corrupt = FALSE,
-  ...
-)
+simulation_data_2D(n_obs = 100, corrupt = FALSE, rho = 0.3, ...)
 
 simulate_1D(
   generator,

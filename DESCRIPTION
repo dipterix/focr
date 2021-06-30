@@ -27,9 +27,14 @@ RoxygenNote: 7.1.1
 Imports: 
     utils,
     graphics,
-    stats
+    stats,
+    Rcpp
 Suggests: 
     rmarkdown,
     knitr,
+    future.apply,
+    png,
     kedd
 VignetteBuilder: knitr
+LinkingTo: 
+    Rcpp

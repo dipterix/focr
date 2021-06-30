@@ -66,83 +66,84 @@ pwr(res$post_selection$rejs, generator$support)
 
 ## 2D, 3D spatial data
 
-Let's generate a 2D sample data ($32\times 32$). The red colored pixels are non-zeros, and white pixels are true null pixels. Our goal is to extract non-zero pixels (red).
+Let's generate a 2D sample data ($150\times 158$). The red colored pixels are non-zeros, and white pixels are true null pixels. Our goal is to extract non-zero pixels (red).
 
-```{r 2D-setup}
+```{r 2D-setup, fig.height=3.5, fig.width=7}
 library(focr)
 set.seed(400)
-generator <- simulation_data_2D(cov_type = 'AR')
+generator <- simulation_data_2D(cov_type = 'AR', n_obs = 100, rho = 0.3)
 data <- generator$gen_data(snr = 0.4)
 mu <- generator$mu
 pal <- colorRampPalette(c('white', 'red'))(64)
 pal2 <- colorRampPalette(c('red', 'white', 'white'))(64)
-image(mu, zlim = c(0,1), col = pal)
+pal3 <- colorRampPalette(c("#FF8181", 'white', "#FF8181", 'red'))(64)
+par(mfrow = c(1,2))
+image(mu, zlim = c(0,1), col = pal, main = "Underlying image")
+image(array(colMeans(data), dim(mu)), col = pal3, main = "Sample mean")
 ```
 
-For each pixel $s$, we test on $H_{0}(s): f(s)=0$ versus $H_{1}(s): f(s)\neq 0$. 
-Next, we perform the `FOCR-LAWS` procedure in one line.
+For each pixel $s$, we test $H_{0}(s): f(s)=0$ versus $H_{1}(s): f(s)\neq 0$. For `FOCR`-based methods, we need to provide block size (diameter in pixels + 1). A proper block size can be determined from `cor(data[,1:50])[1,]`. The correlation between the first pixel and the second pixel is 0.3, and  the correlation between the first pixel and the third pixel is 0.009 (small). Therefore, only adjacent pixels are correlated, hence the block radius is 1, and `block_size=1x2+1=3`.
 
 ```{r}
 # Run FOCR-BH
 dim(data)
-res <- focr(data = data, block_size = 11, 
+block_size <- 3
+res_LAWS <- focr(data = data, block_size = block_size, 
             alpha = 0.05, fdr_method = 'LAWS', 
-            dimension = dim(mu), 
-            verbose = TRUE)
+            dimension = dim(mu))
+res_SABHA <- focr(data = data, block_size = block_size, 
+            alpha = 0.05, fdr_method = 'SABHA', 
+            dimension = dim(mu))
+res_BH <- focr(data = data, block_size = block_size,
+               alpha = 0.05, fdr_method = 'BH')
 ```
 
-Notice `data` is flattened as a matrix of dimension $100 \times 1024$ (100 observations and $32\times 32$ columns)
+Notice `data` is flattened as a matrix of dimension $100 \times 23700$ (100 observations and $150\times 158$ columns)
 
 The following figure shows the `FOCR` conditional p-values and `FOCR-LAWS` final rejections side-by-side. As comparisons, we also show the results of `LAWS`<a name=cite-cai2021laws></a>[[3](#bib-cai2021laws)] and `BH`<a name=cite-benjamini1995controlling></a>[[1](#bib-benjamini1995controlling)] procedure on unconditional p-values. Under dependence, the `FOCR-LAWS` avoids inflated FDR compared to original LAWS method. Our approach also tends to select less isolated pixels outside of the cluster. It is also more powerful than the `BH` procedure.
 
-```{r FOCR-LAWS-2D, fig.width=7, fig.height=6}
-par(mfrow = c(2, 2))
+```{r FOCR-LAWS-2D, fig.width=7, fig.height=4}
+par(mfrow = c(2, 4), mar = c(2.1, 4.1, 4.1, 2.1))
+image_dimension <- dim(mu)
+plot_rejections <- function(rej, method){
+  img <- array(NA, image_dimension)
+  focr_bh <- rej$rejs
+  img[focr_bh] <- 1
+  image(img, zlim = c(0,1), col = pal, asp = 1, axes = FALSE,
+        main = sprintf('%s rejections\nFDP: %.1f%%, Power: %.1f%%',
+                       method, fdp(focr_bh, generator$support)*100,
+                       pwr(focr_bh, generator$support)*100))
+}
 
 # Plot conditional p-values
-cond_pvals <- res$cond_pvals
+cond_pvals <- res_LAWS$cond_pvals
 dim(cond_pvals) <- dim(mu)
 image(cond_pvals, zlim = c(0,1), col = pal2, 
-      main = 'FOCR conditional p-values')
+      main = 'FOCR conditional p-values', asp = 1, axes = FALSE)
 
 # Plot final rejections
-img <- matrix(NA, 32, 32)
-focr_bh <- res$post_selection$rejs
-img[focr_bh] <- 1
-image(img, zlim = c(0,1), col = pal, 
-      main = 'FOCR-LAWS final rejections (proposed)', 
-      sub = sprintf("FDP: %.1f%%, Power: %.1f%%",
-                    fdp(focr_bh, generator$support)*100,
-                    pwr(focr_bh, generator$support)*100))
+plot_rejections(res_LAWS$post_selection, res_LAWS$method)
+plot_rejections(res_SABHA$post_selection, res_SABHA$method)
+plot_rejections(res_BH$post_selection, res_BH$method)
 
-# Compare with LAWS
-pvals <- res$uncond_pvals
-dim(pvals) <- dim(mu)
+# Compare with methods on unconditional p-values
+pvals <- res_BH$uncond_pvals
+dim(pvals) <- image_dimension
+image(pvals, zlim = c(0,1), col = pal2, 
+      main = 'Unconditional p-values', asp = 1, axes = FALSE)
+
+
 # Under dependence, LAWS must use large bandwidth
 # and small purity value (initial filter) to avoid 
 # inflated FDR, therefore we cannot use small ones 
 # as FOCR-LAWS
-rej <- LAWS(pvals, alpha = 0.05, bandwidth = 50, initial_filter = 0.5)
-bh <- rej$rejs
-img <- matrix(NA, 32, 32)
-img[bh] <- 1
-image(img, zlim = c(0,1), col = pal, 
-      main = 'LAWS rejections as comparison',
-      sub = sprintf("FDP: %.1f%%, Power: %.1f%%",
-                    fdp(bh, generator$support)*100,
-                    pwr(bh, generator$support)*100))
+rej_LAWS <- LAWS(pvals, alpha = 0.05, bandwidth = 1.5)
+rej_SABHA <- SABHA(pvals, alpha = 0.05, bandwidth = 1.5)
+rej_BH <- BH(pvals, alpha = 0.05)
 
-# Compare with BH
-pvals <- res$uncond_pvals
-dim(pvals) <- dim(mu)
-rej <- BH(pvals, alpha = 0.05)
-bh <- rej$rejs
-img <- matrix(NA, 32, 32)
-img[bh] <- 1
-image(img, zlim = c(0,1), col = pal, 
-      main = 'BH rejections as comparison',
-      sub = sprintf("FDP: %.1f%%, Power: %.1f%%",
-                    fdp(bh, generator$support)*100,
-                    pwr(bh, generator$support)*100))
+plot_rejections(rej_LAWS, 'LAWS')
+plot_rejections(rej_SABHA, 'SABHA')
+plot_rejections(rej_BH, 'BH')
 ```
 
 ```{r, results='hide', message=FALSE, echo=FALSE}

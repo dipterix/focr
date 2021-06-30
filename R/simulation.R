@@ -81,6 +81,28 @@ gen_error <- function(n_points, type = c("AR", "exponential", "matern", "any", "
 
 }
 
+gen_error_2D <- function (dim, sd, nobs, rho = 0.75, ...) {
+  ans <- sapply(seq_len(nobs), function(z){
+    start <- array(rnorm(prod(dim), 0, sd), dim = dim)
+    noise <- array(0, dim = dim)
+    noise[1, 1] <- start[1, 1]
+
+    for (i in 2:dim[1]) {
+      noise[i, 1] <- rho * noise[(i - 1), 1] + sqrt(1 - rho ^ 2) * start[i, 1]
+    }
+    for (j in 2:dim[2]) {
+      noise[, j] <- rho * noise[, (j - 1)] + sqrt(1 - rho^2) * start[, j]
+    }
+    for (i in 2:dim[1]) {
+      noise[i, 2:dim[2]] <- rho * noise[(i - 1), 2:dim[2]] + sqrt(1 - rho^2) * noise[i, 2:dim[2]]
+    }
+    noise
+  })
+  # obs x npoints
+  return(t(ans))
+}
+
+
 #' @name simulation
 #' @title Generate simulation data used in the paper and vignettes
 #' @description \code{simulation_data_1D} generates one-dimensional data,
@@ -233,16 +255,14 @@ simulation_data_1D <- function(
 #' @rdname simulation
 #' @export
 simulation_data_2D <- function(
-  cov_type = c("iid", "AR", "exponential", "matern", "any"),
-  n_obs = 100, corrupt = FALSE, ...
+  n_obs = 100, corrupt = FALSE, rho = 0.3, ...
 ){
-  cov_type <- match.arg(cov_type)
   # download.file(url, 'figure/tmp.png')
   # mu <- png::readPNG('inst/triangle.png')
   # write.table(1-mu[,,3], file = 'inst/triangle.txt', sep = '\t',
   #             row.names = FALSE, col.names = FALSE)
   # mu <- read.table(system.file('triangle.txt', package = 'focr'), sep = '\t', header = FALSE)
-  mu <- 1 - t(png::readPNG(system.file('cards.png', package = 'focr'))[,,1])
+  mu <- 1 - t(png::readPNG(system.file('cards-sm.png', package = 'focr'))[,,1])
   mu <- as.matrix(mu)
   mu[mu < 0.1] <- 0
   mu[mu > 0.1 & mu < 0.6] <- 0.5
@@ -251,13 +271,9 @@ simulation_data_2D <- function(
   # dat <- gen_error(n_points, type = cov_type, ...)
   dat <- list(
     n_points = n_points,
-    type = cov_type,
     sd = 1,
     gen_data = function(n_obs, mu){
-      d <- neuRosim::spatialnoise(dim, 1, n_obs, rho = 0.95, method="corr")
-      aperm(d, c(3,1,2))
-      dim(d) <- c(n_obs, n_points)
-      d
+      gen_error_2D(dim, 1, n_obs, rho = rho)
     }
   )
   # generate data using cov of power
@@ -284,7 +300,7 @@ simulation_data_2D <- function(
   }
 
   pretty_list(
-    simulation_type = dat$type,
+    simulation_type = "2D Spatial",
     mu = mu * dat$sd, support = sig,
     n_obs = n_obs, n_points = dat$n_points,
     sd = dat$sd, cor = dat$cor,

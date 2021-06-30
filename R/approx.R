@@ -19,7 +19,7 @@ gamma_approx <- function(cov){
 gamma_approx2 <- function(cov){
   M <- nrow(cov)
   # diag(cov) <- 0
-  u <- (sum(cov^2) / M) * 2
+  u <- (sumsquared(cov) / M) * 2
   list(
     M = M,
     u = u

@@ -8,6 +8,7 @@
 focr_initial(
   data,
   data_corr,
+  scale,
   blocks,
   nblocks = ncol(data),
   mu = 0,

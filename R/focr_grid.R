@@ -168,7 +168,7 @@ NULL
 
 #' @rdname focr
 #' @export
-focr_initial <- function(data, data_corr, blocks, nblocks = ncol(data),
+focr_initial <- function(data, data_corr, scale, blocks, nblocks = ncol(data),
                          mu = 0, alpha = 0.05, verbose = FALSE,
                          side = c('two', 'left', 'right'), ...){
   # debug
@@ -214,13 +214,21 @@ focr_initial <- function(data, data_corr, blocks, nblocks = ncol(data),
   if(length(mu) > 1 || mu != 0){
     data <- sweep(data, 2L, mu, '-', check.margin = TRUE)
   }
-  scale <- apply(data, 2L, stats::sd, na.rm = TRUE)
-  data <- sweep(data, 2L, scale, '/', check.margin = FALSE)
+  if(missing(scale)){
+    scale <- apply(data, 2L, stats::sd, na.rm = TRUE)
+  }
+  if(length(scale) == 1){
+    data <- data / scale
+  } else {
+    data <- sweep(data, 2L, scale, '/')
+  }
 
   # data covariance/correlation (identical since data is rescaled)
   if(missing(data_corr)){
+    # data_corr <- stats::cov(data)
     slice_cor <- function(rows, cols){
-      cor(data[,rows, drop = FALSE], data[,cols, drop = FALSE])
+      # cor(data[,rows, drop = FALSE], data[,cols, drop = FALSE])
+      stats::cor(data[,rows, drop = FALSE], data[,cols, drop = FALSE])
     }
   } else if(is.function(data_corr)){
     slice_cor <- data_corr
@@ -236,6 +244,7 @@ focr_initial <- function(data, data_corr, blocks, nblocks = ncol(data),
     mean[idx]
   }
   # slice_cor
+  sapply <- get_sapply()
   stats <- t(sapply(seq_len(nblocks), function(ii){
     if(ii %% 1000 == 0){
       debug(sprintf("Block %d \r", ii), appendLF = FALSE)
@@ -274,6 +283,7 @@ focr_initial <- function(data, data_corr, blocks, nblocks = ncol(data),
   p0 <- rep(NA, M)
 
   thresholds <- qf(tau, stats$shape * 2, df2 = stats$df2, lower.tail = FALSE) * stats$scale * stats$shape
+  count <- 0
   for(ii in rej_stage_1$rejs){
 
     # get indices
@@ -293,6 +303,11 @@ focr_initial <- function(data, data_corr, blocks, nblocks = ncol(data),
 
     p <- pf(d, 1, df2 = n - 1, lower.tail = FALSE)
     p0[idx] <- pmax(p0[idx], p, na.rm = TRUE)
+
+    count <- count + 1
+    if(count %% 1000 == 0){
+      debug(sprintf("Post-selection: processed %d\r", count), appendLF = FALSE)
+    }
   }
 
   p1 <- pf(mean^2 * n, 1, df2 = n - 1, lower.tail = FALSE)
@@ -403,19 +418,29 @@ focr <- function(data, block_size, alpha = 0.05, fdr_method = c('BH', 'LAWS', 'S
       ijk <- as.vector(arrayInd(ii, dimension))
       ijk <- idx_lookup + ijk
       ijk <- ijk[,colSums(ijk < 1 | ijk > dimension) == 0]
-      as.vector((dimension_shift %*% (ijk - 1)) + 1)
+      as.vector(crossprod(dimension_shift, ijk - 1) + 1)
     }
 
   }
+  args <- list(..., bandwidth = bandwidth,
+               initial_filter = initial_filter,
+               verbose = verbose)
+
   debug('Calculating FOCR initial rejections')
-  res1 <- focr_initial(data, blocks = window_idx, side = side,
-               nblocks = M, alpha = alpha, verbose = verbose, ...)
+  if(length(args[['nblocks']]) == 1){
+    res1 <- focr_initial(data, blocks = window_idx, side = side,
+                         alpha = alpha, verbose = verbose, ...)
+  } else {
+    res1 <- focr_initial(data, blocks = window_idx, side = side,
+                         nblocks = M, alpha = alpha, verbose = verbose, ...)
+  }
+
 
   # Post-selection
   cond_pvals <- res1$cond_pvals
 
   # re-shape pvals
-  debug('Re-shape conditional p-values')
+  debug('Re-shape conditional p-values\t\t')
   if(ndims > 1){
     dim(cond_pvals) <- dimension
     res1$dimension <- dimension
@@ -424,18 +449,18 @@ focr <- function(data, block_size, alpha = 0.05, fdr_method = c('BH', 'LAWS', 'S
     dim_str <- 'one'
     res1$dimension <- NULL
   }
+  args$dimension <- dim_str
 
 
   # get formals
-  debug('Call post-selection FDR control')
+  debug('Prepare for post-selection FDR control')
   fml <- names(formals(fdr_method))[-1]
-  args <- list(..., bandwidth = bandwidth,
-               initial_filter = initial_filter, dimension = dim_str,
-               verbose = verbose)
   if(!'...' %in% fml){
     fml <- fml[fml %in% names(args)]
     args <- c(list(cond_pvals), args[fml])
   }
+
+  debug('Call post-selection FDR control')
   res2 <- do.call(fdr_method, args)
 
   debug('Finalizing, post-selection results is included as "ret$post_selection".')

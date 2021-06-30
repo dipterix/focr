@@ -163,7 +163,7 @@ grid_pvals <- function(mean, var, cor, radius, n, sigma = FALSE, window_type = c
     m <- slice_mean(idx)
     v <- slice_cor(idx)
 
-    tval <- n * sum(m^2)
+    tval <- n * sumsquared(m)
     param <- gamma_approx(v)
     shape <- param$M / param$u
     scale <- param$u
