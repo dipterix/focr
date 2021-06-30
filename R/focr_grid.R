@@ -228,7 +228,8 @@ focr_initial <- function(data, data_corr, scale, blocks, nblocks = ncol(data),
     # data_corr <- stats::cov(data)
     slice_cor <- function(rows, cols){
       # cor(data[,rows, drop = FALSE], data[,cols, drop = FALSE])
-      stats::cor(data[,rows, drop = FALSE], data[,cols, drop = FALSE])
+      # stats::cor(data[,rows, drop = FALSE], data[,cols, drop = FALSE])
+      fastcov2(data, rows, cols)
     }
   } else if(is.function(data_corr)){
     slice_cor <- data_corr
