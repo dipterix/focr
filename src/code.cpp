@@ -78,6 +78,95 @@ int setThreads(int n, SEXP reset_after_fork){
 
 
 // ------ Main functions ------
+// [[Rcpp::export]]
+SEXP pis_1D(NumericVector &pval, double tau = 0.1,
+            double h = 50, int verbose = 0) {
+
+  R_xlen_t m = pval.length();
+  SEXP re = PROTECT(Rf_allocVector(REALSXP, m));
+  double* re_ptr = REAL(re);
+
+  double tmp, tmp1, tmp2;
+  R_xlen_t count = 0;
+
+#if defined(_OPENMP)
+
+  R_xlen_t ncores = getThreads();
+  if( ncores > m ){ ncores = m; }
+
+#pragma omp parallel num_threads(ncores) private(tmp, tmp1, tmp2)
+{
+#pragma omp for
+  for( R_xlen_t i = 0; i < m; i++ ){
+
+    tmp1 = tmp2 = 0;
+
+    for( R_xlen_t s = 0; s < m; s++ ){
+      tmp = abs(s - i) / h;
+      tmp = exp(-0.5 * tmp * tmp) / h * 0.398942280401432677939946059934;
+
+      if(pval[s] >= tau){
+        tmp1 += tmp;
+      }
+      tmp2 += tmp;
+
+    }
+
+    tmp = tmp1 / tmp2 / (1 - tau);
+    if( tmp > 1 ){ tmp = 1; }
+    *(re_ptr+i) = 1.0 - tmp;
+
+    if(verbose){
+#pragma omp critical
+{
+  // Rcpp::checkUserInterrupt();
+  count += 1;
+  // verbose
+  if(count % 1000 == 0){
+    Rprintf("Calculating sparsity-level (%d of %d)\r", count, m);
+  }
+}
+    }
+
+  }
+}
+#else
+  for( R_xlen_t i = 0; i < m; i++ ){
+
+    tmp1 = tmp2 = 0;
+
+    for( R_xlen_t s = 0; s < m; s++ ){
+      tmp = abs(s - i) / h;
+      tmp = exp(-0.5 * tmp * tmp) / h * 0.398942280401432677939946059934;
+
+      if(pval[s] >= tau){
+        tmp1 += tmp;
+      }
+      tmp2 += tmp;
+
+    }
+
+    tmp = tmp1 / tmp2 / (1 - tau);
+    if( tmp > 1 ){ tmp = 1; }
+    *(re_ptr+i) = 1.0 - tmp;
+
+    if(verbose){
+      // No openmp, so we can do this
+      Rcpp::checkUserInterrupt();
+      count += 1;
+      // verbose
+      if(count % 1000 == 0){
+        Rprintf("Calculating sparsity-level (%d of %d)\r", count, m);
+      }
+    }
+
+  }
+#endif
+
+  UNPROTECT(1);
+  return re;
+}
+
 
 void disvec(
     double* re_ptr,

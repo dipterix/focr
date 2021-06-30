@@ -31,7 +31,7 @@ In the rest of this vignette, we refer to `FOCR framework` or `FOCR-XXX` as this
 
 We generate a functional data as follows. In the figure, the red solid line is the underlying step function. The blue line is the data sample mean, and ribbon around is the `95%` point-wise confidence interval. Our goal is to find the support of the function.
 
-```{r setup, fig.width=6}
+```{r setup, fig.width=6, message=FALSE, results='hide'}
 library(focr)
 set.seed(400)
 generator <- simulation_data_1D(n_points = 1000, mu_type = 'step')
@@ -43,9 +43,9 @@ plot(generator, data = data, snr = 0.5)
 We apply the `FOCR-BH` approach to control the FDR at level 0.05. `FOCR-BH` uses the `Benjamini-Hochberg` (`BH`) procedure as the FDR control method in stage-II.
 
 
-```{r FOCR-BH, fig.width=6}
+```{r FOCR-BH, fig.width=6, message=FALSE, results='hide'}
 res <- focr(data = data, block_size = 21, 
-            alpha = 0.05, fdr_method = 'BH')
+            alpha = 0.05, fdr_method = 'BH', verbose = TRUE)
 ```
 
 Let's plot $s$ where the null hypotheses $\mu(s) = 0$ are rejected. The orange line segments indicate the initial rejections that control the `FOCR` (cluster-level `ROI`). The blue line segments are the `FOCR-BH` final rejections that control the `FDR` (individual level).
@@ -71,7 +71,7 @@ Let's generate a 2D sample data ($150\times 158$). The red colored pixels are no
 ```{r 2D-setup, fig.height=3.5, fig.width=7}
 library(focr)
 set.seed(400)
-generator <- simulation_data_2D(cov_type = 'AR', n_obs = 100, rho = 0.3)
+generator <- simulation_data_2D(cov_type = 'AR', n_obs = 100, rho = 0.8)
 data <- generator$gen_data(snr = 0.4)
 mu <- generator$mu
 pal <- colorRampPalette(c('white', 'red'))(64)
@@ -87,12 +87,13 @@ For each pixel $s$, we test $H_{0}(s): f(s)=0$ versus $H_{1}(s): f(s)\neq 0$. Fo
 ```{r, message=FALSE, results='hide'}
 # Run FOCR-BH
 dim(data)
-block_size <- 7
+block_size <- 15
+bandwidth <- 3.5
 res_LAWS <- focr(data = data, block_size = block_size, 
-            alpha = 0.05, fdr_method = 'LAWS', bandwidth = 1.5,
+            alpha = 0.05, fdr_method = 'LAWS', bandwidth = bandwidth,
             dimension = dim(mu), verbose = TRUE)
 res_SABHA <- focr(data = data, block_size = block_size, 
-            alpha = 0.05, fdr_method = 'SABHA', bandwidth = 1.5,
+            alpha = 0.05, fdr_method = 'SABHA', bandwidth = bandwidth,
             dimension = dim(mu), verbose = TRUE)
 res_BH <- focr(data = data, block_size = block_size,
                alpha = 0.05, fdr_method = 'BH', 
@@ -138,9 +139,9 @@ image(pvals, zlim = c(0,1), col = pal2,
 # and small purity value (initial filter) to avoid 
 # inflated FDR, therefore we cannot use small ones 
 # as FOCR-LAWS
-rej_LAWS <- LAWS(pvals, alpha = 0.05, bandwidth = 1.5, 
+rej_LAWS <- LAWS(pvals, alpha = 0.05, bandwidth = bandwidth, 
                  dimension = 'two', verbose = TRUE)
-rej_SABHA <- SABHA(pvals, alpha = 0.05, bandwidth = 1.5, 
+rej_SABHA <- SABHA(pvals, alpha = 0.05, bandwidth = bandwidth, 
                    dimension = 'two', verbose = TRUE)
 rej_BH <- BH(pvals, alpha = 0.05)
 

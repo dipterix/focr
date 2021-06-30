@@ -56,7 +56,9 @@ laws_pval <- function(pv, bandwidth, dimension = c("one", "two", "three"), alpha
   stopifnot(is.double(bh.th))
   switch (
     dimension,
-    'one' = { pis.hat<-pis_1D.func(pv, tau=bh.th, h=bandwidth) },
+    'one' = {
+      pis.hat<-pis_1D(pv, tau=bh.th, h=bandwidth, verbose = verbose)
+    },
     'two' = {
       dm <- dim(pv)
       pis.hat<-pis_2D(pv, dm[1], dm[2], tau=bh.th, h=bandwidth, verbose = verbose)
@@ -90,7 +92,9 @@ sabha_pval <- function(pv, bandwidth, dimension = c("one", "two", "three"), alph
   stopifnot(is.double(bh.th))
   switch (
     dimension,
-    'one' = { pis.hat<-pis_1D.func(pv, tau=bh.th, h=bandwidth) },
+    'one' = {
+      pis.hat<-pis_1D(pv, tau=bh.th, h=bandwidth, verbose = verbose)
+    },
     'two' = {
       dm <- dim(pv)
       pis.hat<-pis_2D(pv, dm[1], dm[2], tau=bh.th, h=bandwidth, verbose = verbose)

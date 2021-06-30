@@ -9,6 +9,10 @@ setThreads <- function(n, reset_after_fork) {
     .Call(`_focr_setThreads`, n, reset_after_fork)
 }
 
+pis_1D <- function(pval, tau = 0.1, h = 50, verbose = 0L) {
+    .Call(`_focr_pis_1D`, pval, tau, h, verbose)
+}
+
 pis_2D <- function(pval, dim1, dim2, tau = 0.1, h = 10.0, verbose = 0L) {
     .Call(`_focr_pis_2D`, pval, dim1, dim2, tau, h, verbose)
 }
