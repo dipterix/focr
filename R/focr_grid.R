@@ -5,6 +5,8 @@
 #' hypotheses
 #' @param data_corr the correlation matrix of \code{data}. If missing, then
 #' the correlation will be calculated empirically
+#' @param scale numerical vector of standard deviations by column; default is
+#' missing (use empirical standard deviation)
 #' @param blocks a list of indices or a function that returns indices
 #' @param nblocks the total number of blocks, used when \code{blocks} is a
 #' function
@@ -248,7 +250,7 @@ focr_initial <- function(data, data_corr, scale, blocks, nblocks = ncol(data),
     mean[idx]
   }
   # slice_cor
-  sapply <- get_sapply()
+  # sapply <- get_sapply()
   debug("ROCR initial rejection...")
   stats <- t(sapply(seq_len(nblocks), function(ii){
     if(ii %% 1000 == 0){

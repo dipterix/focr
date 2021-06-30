@@ -40,6 +40,8 @@ implementation only supports 1-3 dimensions}
 
 \item{alpha}{'FDR' level}
 
+\item{verbose}{whether to print out debug messages; default is false}
+
 \item{filter, initial_filter}{initial p-value filters, the goal is to remove
 large p-values when true signals are sparse. For \code{LAWS} and
 \code{SABHA}, \code{initial_filter} helps determine sparsity levels.}

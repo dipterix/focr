@@ -123,6 +123,8 @@ gen_error_2D <- function (dim, sd, nobs, rho = 0.75, ...) {
 #' see \code{\link{focr}}
 #' @param initial_filter,bandwidth used by \code{LAWS} and \code{SABHA}; see
 #' \code{\link{focr}}, \code{\link{fdr-controls}}
+#' @param rho for two-dimensional simulation only, the correlation between
+#' adjacent locations
 #' @param alpha 'FOCR' and 'FDR' level; default is \code{0.05}
 #' @param ... passed to internal function; see 'Details'
 #' @details

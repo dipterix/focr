@@ -41,6 +41,9 @@ hypotheses}
 \item{data_corr}{the correlation matrix of \code{data}. If missing, then
 the correlation will be calculated empirically}
 
+\item{scale}{numerical vector of standard deviations by column; default is
+missing (use empirical standard deviation)}
+
 \item{blocks}{a list of indices or a function that returns indices}
 
 \item{nblocks}{the total number of blocks, used when \code{blocks} is a

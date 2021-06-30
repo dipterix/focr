@@ -1,12 +1,12 @@
-get_sapply <- function(){
-  # if(system.file('', package = "future.apply") != ''){
-  #   return(function(..., future.seed=TRUE){
-  #     future.apply::future_sapply(..., future.seed=future.seed)
-  #   })
-  # } else {
-    return(sapply)
-  # }
-}
+# get_sapply <- function(){
+#   # if(system.file('', package = "future.apply") != ''){
+#   #   return(function(..., future.seed=TRUE){
+#   #     future.apply::future_sapply(..., future.seed=future.seed)
+#   #   })
+#   # } else {
+#     return(sapply)
+#   # }
+# }
 
 
 fastcov2 <- function(data, col1, col2){
@@ -25,7 +25,7 @@ fastcov2 <- function(data, col1, col2){
   }
 
   # fastcov(data, nrow(data), ncol(data), col1, col2)
-  setThreads(0, TRUE)
+  # setThreads(0, TRUE)
   fastcov(data, col1, col2)
 
 }

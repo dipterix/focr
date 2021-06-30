@@ -71,7 +71,7 @@ Let's generate a 2D sample data ($150\times 158$). The red colored pixels are no
 ```{r 2D-setup, fig.height=3.5, fig.width=7}
 library(focr)
 set.seed(400)
-generator <- simulation_data_2D(cov_type = 'AR', n_obs = 100, rho = 0.8)
+generator <- simulation_data_2D(n_obs = 100, rho = 0.8)
 data <- generator$gen_data(snr = 0.4)
 mu <- generator$mu
 pal <- colorRampPalette(c('white', 'red'))(64)

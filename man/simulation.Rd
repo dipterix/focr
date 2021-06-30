@@ -47,6 +47,9 @@ addition model}
 
 \item{...}{passed to internal function; see 'Details'}
 
+\item{rho}{for two-dimensional simulation only, the correlation between
+adjacent locations}
+
 \item{generator}{list items returned by \code{simulation_data_1D}}
 
 \item{snr}{positive number to control the signal-to-noise ratio}

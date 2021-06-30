@@ -20,6 +20,7 @@
 #' @param bandwidth kernel smoothing bandwidth
 #' @param dimension the spatial dimension of underlying data. Current
 #' implementation only supports 1-3 dimensions
+#' @param verbose whether to print out debug messages; default is false
 #' @return A list of rejection results:
 #' \describe{
 #' \item{\code{rejs}}{integer indices of rejected hypotheses;}
