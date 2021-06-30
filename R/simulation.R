@@ -262,6 +262,7 @@ simulation_data_2D <- function(
   # write.table(1-mu[,,3], file = 'inst/triangle.txt', sep = '\t',
   #             row.names = FALSE, col.names = FALSE)
   # mu <- read.table(system.file('triangle.txt', package = 'focr'), sep = '\t', header = FALSE)
+  # mu <- 1 - t(png::readPNG(system.file('cards.png', package = 'focr'))[,,1])
   mu <- 1 - t(png::readPNG(system.file('cards-sm.png', package = 'focr'))[,,1])
   mu <- as.matrix(mu)
   mu[mu < 0.1] <- 0

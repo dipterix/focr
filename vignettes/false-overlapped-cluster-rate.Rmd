@@ -84,25 +84,26 @@ image(array(colMeans(data), dim(mu)), col = pal3, main = "Sample mean")
 
 For each pixel $s$, we test $H_{0}(s): f(s)=0$ versus $H_{1}(s): f(s)\neq 0$. For `FOCR`-based methods, we need to provide block size (diameter in pixels + 1). A proper block size can be determined from `cor(data[,1:50])[1,]`. The correlation between the first pixel and the second pixel is 0.3, and  the correlation between the first pixel and the third pixel is 0.009 (small). Therefore, only adjacent pixels are correlated, hence the block radius is 1, and `block_size=1x2+1=3`.
 
-```{r}
+```{r, message=FALSE, results='hide'}
 # Run FOCR-BH
 dim(data)
-block_size <- 3
+block_size <- 7
 res_LAWS <- focr(data = data, block_size = block_size, 
-            alpha = 0.05, fdr_method = 'LAWS', 
-            dimension = dim(mu))
+            alpha = 0.05, fdr_method = 'LAWS', bandwidth = 1.5,
+            dimension = dim(mu), verbose = TRUE)
 res_SABHA <- focr(data = data, block_size = block_size, 
-            alpha = 0.05, fdr_method = 'SABHA', 
-            dimension = dim(mu))
+            alpha = 0.05, fdr_method = 'SABHA', bandwidth = 1.5,
+            dimension = dim(mu), verbose = TRUE)
 res_BH <- focr(data = data, block_size = block_size,
-               alpha = 0.05, fdr_method = 'BH')
+               alpha = 0.05, fdr_method = 'BH', 
+               dimension = dim(mu), verbose = TRUE)
 ```
 
 Notice `data` is flattened as a matrix of dimension $100 \times 23700$ (100 observations and $150\times 158$ columns)
 
 The following figure shows the `FOCR` conditional p-values and `FOCR-LAWS` final rejections side-by-side. As comparisons, we also show the results of `LAWS`<a name=cite-cai2021laws></a>[[3](#bib-cai2021laws)] and `BH`<a name=cite-benjamini1995controlling></a>[[1](#bib-benjamini1995controlling)] procedure on unconditional p-values. Under dependence, the `FOCR-LAWS` avoids inflated FDR compared to original LAWS method. Our approach also tends to select less isolated pixels outside of the cluster. It is also more powerful than the `BH` procedure.
 
-```{r FOCR-LAWS-2D, fig.width=7, fig.height=4}
+```{r FOCR-LAWS-2D, fig.width=7, fig.height=4, results='hide'}
 par(mfrow = c(2, 4), mar = c(2.1, 4.1, 4.1, 2.1))
 image_dimension <- dim(mu)
 plot_rejections <- function(rej, method){
@@ -137,8 +138,10 @@ image(pvals, zlim = c(0,1), col = pal2,
 # and small purity value (initial filter) to avoid 
 # inflated FDR, therefore we cannot use small ones 
 # as FOCR-LAWS
-rej_LAWS <- LAWS(pvals, alpha = 0.05, bandwidth = 1.5)
-rej_SABHA <- SABHA(pvals, alpha = 0.05, bandwidth = 1.5)
+rej_LAWS <- LAWS(pvals, alpha = 0.05, bandwidth = 1.5, 
+                 dimension = 'two', verbose = TRUE)
+rej_SABHA <- SABHA(pvals, alpha = 0.05, bandwidth = 1.5, 
+                   dimension = 'two', verbose = TRUE)
 rej_BH <- BH(pvals, alpha = 0.05)
 
 plot_rejections(rej_LAWS, 'LAWS')

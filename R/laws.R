@@ -44,20 +44,23 @@ get_bandwidth <- function(l, d){
   bw$h
 }
 
-laws_pval <- function(pv, bandwidth, dimension = c("one", "two", "three"), alpha = 0.05, initial_filter = 0.9){
+laws_pval <- function(pv, bandwidth, dimension = c("one", "two", "three"), alpha = 0.05, initial_filter = 0.9, verbose = FALSE){
   if(is.na(bandwidth)){
     bandwidth <- get_bandwidth(length(pv), dim(pv))
   }
+  stopifnot(isTRUE(bandwidth > 0))
+  stopifnot(isTRUE(initial_filter >= 0 && initial_filter <= 1))
   dimension <- match.arg(dimension)
   # Do not remove 1s
   bh.th<-BH(pv, initial_filter, filter = 2)$tau
-  # if(bandwidth < 1){
-  #   bandwidth <- bandwidth * length(pv)
-  # }
+  stopifnot(is.double(bh.th))
   switch (
     dimension,
     'one' = { pis.hat<-pis_1D.func(pv, tau=bh.th, h=bandwidth) },
-    'two' = { pis.hat<-pis_2D.func(pv, tau=bh.th, h=bandwidth) },
+    'two' = {
+      dm <- dim(pv)
+      pis.hat<-pis_2D(pv, dm[1], dm[2], tau=bh.th, h=bandwidth, verbose = verbose)
+    },
     { pis.hat<-pis_3D.func(pv, tau=bh.th, h=bandwidth) }
   )
 
@@ -76,16 +79,22 @@ laws_pval <- function(pv, bandwidth, dimension = c("one", "two", "three"), alpha
 }
 
 
-sabha_pval <- function(pv, bandwidth, dimension = c("one", "two", "three"), alpha = 0.05, initial_filter = 0.9){
+sabha_pval <- function(pv, bandwidth, dimension = c("one", "two", "three"), alpha = 0.05, initial_filter = 0.9, verbose = FALSE){
   if(is.na(bandwidth)){
     bandwidth <- get_bandwidth(length(pv), dim(pv))
   }
+  stopifnot(isTRUE(bandwidth > 0))
+  stopifnot(isTRUE(initial_filter >= 0 && initial_filter <= 1))
   dimension <- match.arg(dimension)
   bh.th<-BH(pv, initial_filter)$tau
+  stopifnot(is.double(bh.th))
   switch (
     dimension,
     'one' = { pis.hat<-pis_1D.func(pv, tau=bh.th, h=bandwidth) },
-    'two' = { pis.hat<-pis_2D.func(pv, tau=bh.th, h=bandwidth) },
+    'two' = {
+      dm <- dim(pv)
+      pis.hat<-pis_2D(pv, dm[1], dm[2], tau=bh.th, h=bandwidth, verbose = verbose)
+    },
     { pis.hat<-pis_3D.func(pv, tau=bh.th, h=bandwidth) }
   )
 

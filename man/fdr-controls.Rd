@@ -13,7 +13,8 @@ LAWS(
   bandwidth,
   dimension = c("one", "two", "three"),
   alpha = 0.05,
-  initial_filter = 0.9
+  initial_filter = 0.9,
+  verbose = FALSE
 )
 
 SABHA(
@@ -21,7 +22,8 @@ SABHA(
   bandwidth,
   dimension = c("one", "two", "three"),
   alpha = 0.05,
-  initial_filter = 0.9
+  initial_filter = 0.9,
+  verbose = FALSE
 )
 
 BH(pvals, alpha = 0.05, filter = 1)

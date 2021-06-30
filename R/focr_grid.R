@@ -227,9 +227,12 @@ focr_initial <- function(data, data_corr, scale, blocks, nblocks = ncol(data),
   if(missing(data_corr)){
     # data_corr <- stats::cov(data)
     slice_cor <- function(rows, cols){
-      # cor(data[,rows, drop = FALSE], data[,cols, drop = FALSE])
-      # stats::cor(data[,rows, drop = FALSE], data[,cols, drop = FALSE])
-      fastcov2(data, rows, cols)
+      if(getThreads() <= 1){
+        cov(data[,rows, drop = FALSE], data[,cols, drop = FALSE])
+        # stats::cor(data[,rows, drop = FALSE], data[,cols, drop = FALSE])
+      } else {
+        fastcov2(data, rows, cols)
+      }
     }
   } else if(is.function(data_corr)){
     slice_cor <- data_corr
@@ -246,6 +249,7 @@ focr_initial <- function(data, data_corr, scale, blocks, nblocks = ncol(data),
   }
   # slice_cor
   sapply <- get_sapply()
+  debug("ROCR initial rejection...")
   stats <- t(sapply(seq_len(nblocks), function(ii){
     if(ii %% 1000 == 0){
       debug(sprintf("Block %d \r", ii), appendLF = FALSE)
@@ -441,7 +445,7 @@ focr <- function(data, block_size, alpha = 0.05, fdr_method = c('BH', 'LAWS', 'S
   cond_pvals <- res1$cond_pvals
 
   # re-shape pvals
-  debug('Re-shape conditional p-values\t\t')
+  debug('Re-shape conditional p-values\t\t\t\t')
   if(ndims > 1){
     dim(cond_pvals) <- dimension
     res1$dimension <- dimension

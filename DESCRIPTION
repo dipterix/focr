@@ -28,7 +28,8 @@ Imports:
     utils,
     graphics,
     stats,
-    Rcpp
+    Rcpp,
+    RcppArmadillo
 Suggests: 
     rmarkdown,
     knitr,
