@@ -45,7 +45,10 @@ int getThreads(){
     return 1;
   }
   int t = openMPThreads <= 0 ? omp_get_max_threads() : std::min(openMPThreads, omp_get_max_threads());
-  return std::max(t, 1);
+  t = std::max(t, 1);
+  // no need to go beyond 8 threads
+  t = std::min(t, 8);
+  return t;
 #else
   return 1;
 #endif
